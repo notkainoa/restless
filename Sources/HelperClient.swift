@@ -27,7 +27,13 @@ final class HelperClient {
 
     func setDisableSleep(_ enabled: Bool) -> Bool {
         guard isEnabled else { return false }
+        if send(enabled) { return true }
+        // A helper left over from before an update exits on this first connection; launchd then spawns the current one.
+        Thread.sleep(forTimeInterval: 0.3)
+        return send(enabled)
+    }
 
+    private func send(_ enabled: Bool) -> Bool {
         let connection = NSXPCConnection(machServiceName: HelperConstants.machServiceName, options: .privileged)
         connection.remoteObjectInterface = NSXPCInterface(with: HelperProtocol.self)
         if let requirement = CodeSigning.sameTeamRequirement(identifier: HelperConstants.helperIdentifier) {

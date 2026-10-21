@@ -38,7 +38,7 @@ enum Prompts {
         alert.messageText = "Approve Amped’s background helper"
         alert.informativeText = """
         In the window that just opened (Login Items & Extensions), turn on \
-        “Amped”. Then choose Keep Awake but Lock the Screen again — it'll be silent from now on.
+        “Amped”. Then turn on Lid Closed Keep Awake again; it won't ask for a password after that.
         """
         alert.addButton(withTitle: "OK")
         NSApp.activate()

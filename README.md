@@ -16,12 +16,15 @@ The build is not notarized. The first time you open it, right-click the app and 
 
 Check for Updates looks at that releases page and, when a newer build exists, opens it so you can download and replace the app.
 
-## The menu
+## The panel
 
-Click the pill in the menu bar. Settings are grouped by lid position; the two
-*Keep Awake* rows are switches and the rest are checkmarks, and changing any of
-them leaves the menu open. Hover or click the **?** next to a group for an
-explanation of its settings.
+Click the pill in the menu bar to open Amped's panel. A status card at the top
+shows what Amped is doing and the battery level; below it the settings are
+grouped by lid position. Hover or click the **?** next to a group for an
+explanation of its settings. **Options** in the bottom corner has Settings
+(`⌘,`), Check for Updates, About and Quit (`⌘Q`); Settings has Launch at Login,
+the helper's status, the version and updates. `Esc` closes the panel.
+Right-click the pill for Settings and Quit.
 
 | Setting | What it does |
 | --- | --- |
@@ -30,7 +33,7 @@ explanation of its settings.
 | **Lid Closed → Sleep Display** | Turns the display off when the lid closes. Off keeps the screen drawing at zero brightness, so a computer-use agent can still see and control it. |
 | **Lid Closed → Lock Screen** | Locks the Mac when the lid closes. Suppressing sleep also suppresses the usual lock-on-sleep, which is why Amped locks instead. Off leaves the desktop usable by anyone who opens the lid. |
 | **Auto-off at 20% Battery** | Safety net: when on battery and the charge drops to 20% or below, Amped releases everything so the Mac can sleep normally. Remembered between launches. |
-| **Launch at Login** | Registers Amped as a login item (via `SMAppService`) so the pill is there every time you log in. |
+| **Launch at Login** (Settings) | Registers Amped as a login item (via `SMAppService`) so the pill is there every time you log in. |
 
 *Sleep Display* and *Lock Screen* can be changed while lid-closed mode is
 off, so you can set them up ahead of time, and do nothing while an external
@@ -43,8 +46,6 @@ The menu bar pill reflects the state at a glance:
 - `pill` — sleep allowed (off)
 - `pill.fill` — awake (lid open)
 - `pills.fill` — awake with the lid closed
-
-A status line shows the current state and battery level. `⌘Q` quits.
 
 > On launch Amped starts with everything **off** (so it never surprises you by
 > blocking sleep or prompting). Only the *Auto-off* preference is remembered.
@@ -157,7 +158,7 @@ feature.
 ```
 Sources/                 (the app)
   AmpedApp.swift          @main App (the Settings window)
-  StatusMenu.swift        the menu bar pill and its menu (switches, checkmarks, ? panels)
+  Panel/                  the menu bar pill and its panel (adapted from OpenUsage, see THIRD_PARTY_NOTICES.md)
   SleepController.swift   state, battery polling, auto-off safety net
   PowerAssertion.swift    IOKit power assertion wrapper (idle sleep)
   Privileged.swift        routes pmset to the helper, else an admin prompt

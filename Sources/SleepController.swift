@@ -101,10 +101,18 @@ final class SleepController: ObservableObject {
         UserDefaults.standard.set(lidClosed, forKey: Self.lastLidClosedKey)
     }
 
+#if DEBUG
+    /// Shows a state in snapshots without holding any assertion or touching pmset.
+    func debugShowState(keepAwake: Bool, lidClosed: Bool) {
+        self.keepAwake = keepAwake
+        self.lidClosed = lidClosed
+    }
+#endif
+
     private func mirrorControlState() {
 #if DEBUG
         // The app-group container prompts in unsigned builds, which would block a layout snapshot.
-        if UserDefaults.standard.string(forKey: "menuSnapshot") != nil || UserDefaults.standard.string(forKey: "menuPreview") != nil || SettingsSnapshot.output != nil { return }
+        if UserDefaults.standard.string(forKey: "panelSnapshot") != nil || SettingsSnapshot.output != nil { return }
 #endif
         let group = UserDefaults(suiteName: AmpedDefaults.suiteName)
         group?.set(keepAwake || lidClosed, forKey: AmpedDefaults.isActiveKey)
@@ -244,7 +252,7 @@ final class SleepController: ObservableObject {
         if on { tick() }
     }
 
-    private func setUpHelper() {
+    func setUpHelper() {
         _ = HelperClient.shared.register()
         refreshHelper()
         if !helperEnabled {

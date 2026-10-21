@@ -2,7 +2,7 @@ import AppKit
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    private var statusMenu: StatusMenu?
+    private var panelController: PanelController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
 #if DEBUG
@@ -12,13 +12,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 #endif
         AppUpdater.registerDefaults()
-        statusMenu = StatusMenu(controller: SleepController.shared)
+        panelController = PanelController(controller: SleepController.shared)
 #if DEBUG
-        if let output = UserDefaults.standard.string(forKey: "menuSnapshot").map({ URL(filePath: $0) }) {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1) { self.statusMenu?.snapshot(to: output) }
-        }
-        if let output = UserDefaults.standard.string(forKey: "menuPreview").map({ URL(filePath: $0) }) {
-            statusMenu?.previewSnapshot(to: output)
+        if let output = UserDefaults.standard.string(forKey: "panelSnapshot").map({ URL(filePath: $0) }) {
+            let screen: PanelScreen = UserDefaults.standard.string(forKey: "panelSnapshotScreen") == "settings" ? .settings : .dashboard
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { self.panelController?.snapshot(to: output, screen: screen) }
         }
 #endif
 #if !DEBUG
@@ -32,8 +30,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         SleepController.shared.cleanup()
     }
 
+    // Opening Amped again shows its settings: in the panel, or in a window while the menu bar item is hidden.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        Self.openSettings()
+        if let panelController, panelController.canShowPanel {
+            panelController.showSettings()
+        } else {
+            Self.openSettings()
+        }
         return true
     }
 

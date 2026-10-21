@@ -13,12 +13,17 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 # Optional local config (git-ignored): DEVELOPMENT_TEAM, CODE_SIGN_IDENTITY, NOTARY_PROFILE.
+# A version passed in by release.sh wins over anything .env sets.
+PASSED_MARKETING_VERSION="${MARKETING_VERSION:-}"
+PASSED_PROJECT_VERSION="${CURRENT_PROJECT_VERSION:-}"
 if [[ -f .env ]]; then
   set -a
   # shellcheck source=/dev/null
   source ./.env
   set +a
 fi
+[[ -n "$PASSED_MARKETING_VERSION" ]] && MARKETING_VERSION="$PASSED_MARKETING_VERSION"
+[[ -n "$PASSED_PROJECT_VERSION" ]] && CURRENT_PROJECT_VERSION="$PASSED_PROJECT_VERSION"
 
 SIGN_ID="${CODE_SIGN_IDENTITY:--}"
 SIGN_ARGS=( "CODE_SIGN_IDENTITY=${SIGN_ID}" )

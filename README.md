@@ -45,12 +45,13 @@ Click the icon in the menu bar to open the panel.
 | **Lid Closed → Keep Awake** | Keeps the Mac running with the lid closed, using `pmset -a disablesleep 1`. When it's off, closing the lid sleeps the Mac. |
 | **Lid Closed → Sleep Display** | Turns the display off when the lid closes. When it's off, the screen keeps drawing at zero brightness, so a computer-use agent can still see and control it. |
 | **Lid Closed → Lock Screen** | Locks the Mac when the lid closes. Keeping the Mac from sleeping also stops the usual lock-on-sleep, so Restless locks it instead. When it's off, anyone who opens the lid can use the desktop. |
-| **Battery → Auto-off at 20%** | A safety net: on battery at 20% or less, Restless releases everything so the Mac can sleep normally. |
+| **Battery → Auto-off at 20%** | A safety net: on battery at 20% or less, Restless releases everything so the Mac can sleep normally. Turning off lid-closed mode needs the helper; without it that part stays on, because turning it off would need your password. |
 | **Launch at Login** (Settings) | Registers Restless as a login item (with `SMAppService`), so it's there every time you log in. |
 
 *Sleep Display* and *Lock Screen* can be changed while lid-closed mode is off,
-so you can set them up ahead of time. They do nothing while an external display
-is connected. With *Sleep Display* on and *Lock Screen* off, macOS can still
+so you can set them up ahead of time. They only affect the laptop's own screen:
+while an external display is connected they do nothing, so closing the lid and
+working on the monitor behaves exactly as macOS normally does. With *Sleep Display* on and *Lock Screen* off, macOS can still
 lock the Mac if your Lock Screen settings require a password when the display
 turns off.
 
@@ -65,6 +66,13 @@ The menu bar icon shows the state at a glance:
 On launch Restless starts with keep-awake **off**, so it never surprises you by
 blocking sleep or asking for a password. When it quits it always restores
 normal sleep.
+
+## Moving from Amped
+
+Restless copies your Amped settings the first time it runs. Quit Amped and
+delete it, then remove Amped's entries under **System Settings → General →
+Login Items & Extensions**, including its background helper. Restless installs
+its own helper, and only Amped's own app could remove Amped's.
 
 ## How lid-closed mode stays passwordless
 

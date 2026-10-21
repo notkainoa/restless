@@ -73,6 +73,7 @@ extension View {
         }
     }
 
+    /// Pass the row's title as the Toggle's label: it's hidden on screen but stays the switch's VoiceOver name.
     func settingsSwitchStyle() -> some View {
         labelsHidden()
             .toggleStyle(.switch)
@@ -320,7 +321,6 @@ struct PopoverKeyReader: NSViewRepresentable {
         var onSettings: (@MainActor () -> Bool)?
         private var monitor: Any?
         private static let escapeKeyCode: UInt16 = 53
-        private static let commaKeyCode: UInt16 = 43
 
         override func viewDidMoveToWindow() {
             super.viewDidMoveToWindow()
@@ -333,7 +333,8 @@ struct PopoverKeyReader: NSViewRepresentable {
                 let keyCode = event.keyCode
                 let modifiers = event.modifierFlags.intersection([.command, .option, .control, .shift])
                 let isEscape = keyCode == Self.escapeKeyCode
-                let isSettings = keyCode == Self.commaKeyCode && modifiers == [.command]
+                // The character rather than the key position, so ⌘, works on every keyboard layout.
+                let isSettings = event.charactersIgnoringModifiers == "," && modifiers == [.command]
                 guard isEscape || isSettings else { return event }
                 let eventWindowID = event.window.map(ObjectIdentifier.init)
                 let consumed = MainActor.assumeIsolated { () -> Bool in

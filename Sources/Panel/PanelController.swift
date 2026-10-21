@@ -69,6 +69,7 @@ final class PanelController: NSObject {
     )
     private var cancellables: Set<AnyCancellable> = []
     private var visibilityObservation: NSKeyValueObservation?
+    private var activationObserver: NSObjectProtocol?
 
     init(controller: SleepController) {
         self.controller = controller
@@ -96,6 +97,17 @@ final class PanelController: NSObject {
         configureStatusItem()
         MenuBarPopover.dismissHandler = { [weak self] in self?.hidePanel() }
         heightController.installBridge()
+
+        // The outside-click monitor only sees the mouse; switching apps from the keyboard (⌘-Tab) closes it too.
+        activationObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
+        ) { [weak self] note in
+            let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
+            let isOtherApp = app?.processIdentifier != ProcessInfo.processInfo.processIdentifier
+            MainActor.assumeIsolated {
+                if isOtherApp { self?.hidePanel() }
+            }
+        }
     }
 
     // MARK: Panel

@@ -16,6 +16,8 @@ REPO="notkainoa/restless"
 
 [[ "$(git rev-parse --abbrev-ref HEAD)" == "main" ]] || { echo "✗ Release from main."; exit 1; }
 [[ -z "$(git status --porcelain)" ]] || { echo "✗ Commit or stash your changes first."; exit 1; }
+# The build number is the commit count, which a shallow clone undercounts; Sparkle would then skip the update.
+[[ "$(git rev-parse --is-shallow-repository)" == "false" ]] || { echo "✗ This is a shallow clone. Run: git fetch --unshallow"; exit 1; }
 git fetch -q origin main
 [[ "$(git rev-parse HEAD)" == "$(git rev-parse origin/main)" ]] || { echo "✗ main isn't in sync with origin/main."; exit 1; }
 if gh release view "v${VERSION}" -R "$REPO" >/dev/null 2>&1; then
@@ -31,6 +33,7 @@ export CURRENT_PROJECT_VERSION="$(git rev-list --count HEAD)"
 
 SPARKLE_BIN=".build/SourcePackages/artifacts/sparkle/Sparkle/bin"
 STAGE="$(mktemp -d)"
+trap 'rm -rf "$STAGE"' EXIT
 ZIP="Restless-${VERSION}.zip"
 /usr/bin/ditto -c -k --sequesterRsrc --keepParent dist/Restless.app "$STAGE/$ZIP"
 
@@ -48,5 +51,4 @@ gh release create "v${VERSION}" "$STAGE/$ZIP" "$STAGE/appcast.xml" \
   --title "Restless ${VERSION}" \
   --generate-notes
 
-rm -rf "$STAGE"
 echo "✅ Released Restless ${VERSION} (build ${CURRENT_PROJECT_VERSION})"

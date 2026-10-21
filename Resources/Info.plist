@@ -26,6 +26,8 @@
 	<true/>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2026 Kainoa Newton</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
 	<key>SUFeedURL</key>
 	<string>https://github.com/notkainoa/restless/releases/latest/download/appcast.xml</string>
 	<key>SUPublicEDKey</key>

@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Combine
 import CoreGraphics
@@ -36,6 +37,7 @@ final class SleepController: ObservableObject {
     private let lidMonitor = LidMonitor()
     private var batteryTimer: Timer?
     private var lidIsShut = false
+    private var displayObserver: NSObjectProtocol?
 
     private static let autoOffKey = "autoOffEnabled"
     private static let helperPromptedKey = "helperPrompted"
@@ -71,6 +73,16 @@ final class SleepController: ObservableObject {
             MainActor.assumeIsolated {
                 guard let self, self.lidIsShut != closed else { return }
                 self.lidIsShut = closed
+                self.syncAssertion()
+                self.applyLidPresentation()
+            }
+        }
+        // Plugging a monitor in or out with the lid shut changes whether the lid settings apply.
+        displayObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, self.lidClosed, self.lidIsShut else { return }
                 self.syncAssertion()
                 self.applyLidPresentation()
             }
@@ -230,7 +242,8 @@ final class SleepController: ObservableObject {
         } else {
             systemAssertion.disable()
         }
-        if keepAwake || (lidClosed && lidIsShut && !lidSleepDisplay) {
+        // Sleep Display only concerns the built-in screen; with a monitor connected, macOS handles the lid as usual.
+        if keepAwake || (lidClosed && lidIsShut && !lidSleepDisplay && onlyBuiltinDisplay()) {
             displayAssertion.enable()
         } else {
             displayAssertion.disable()
@@ -295,12 +308,13 @@ final class SleepController: ObservableObject {
         guard keepAwake || lidClosed else { return }
 
         backlight.restore()
-        systemAssertion.disable()
-        displayAssertion.disable()
-        // Without the helper, clamshell mode can't be dropped unattended.
-        if lidClosed { _ = Privileged.setDisableSleep(false, allowPrompt: false) }
         keepAwake = false
-        lidClosed = false
+        // Without the helper, lid mode can't be turned off unattended (that needs a password), so it stays
+        // on and shown as on rather than claiming the Mac can sleep while `disablesleep` is still set.
+        if lidClosed, Privileged.setDisableSleep(false, allowPrompt: false) {
+            lidClosed = false
+        }
+        syncAssertion()
     }
 
     func refreshStatus() {

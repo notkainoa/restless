@@ -114,6 +114,7 @@ private final class TooltipPresenter {
     private var shownID: UUID?
     private var shownText: String?
     private var pendingID: UUID?
+    private var pendingText: String?
     private var revealTask: Task<Void, Never>?
 
     /// One dwell for every target, with no quick re-show for neighbours: sweeping across labels would
@@ -180,9 +181,10 @@ private final class TooltipPresenter {
             return
         }
         if shownID != nil { hide() }
-        if pendingID == id { return }
+        if pendingID == id, pendingText == target.text { return }
         cancelPending()
         pendingID = id
+        pendingText = target.text
         let delay = revealDelay
         revealTask = Task { [weak self] in
             try? await Task.sleep(for: delay)
@@ -191,6 +193,7 @@ private final class TooltipPresenter {
             self.shownID = id
             self.shownText = target.text
             self.pendingID = nil
+            self.pendingText = nil
             self.revealTask = nil
         }
     }
@@ -199,6 +202,7 @@ private final class TooltipPresenter {
         revealTask?.cancel()
         revealTask = nil
         pendingID = nil
+        pendingText = nil
     }
 
     private func hide() {

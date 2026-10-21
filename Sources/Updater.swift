@@ -10,7 +10,9 @@ final class Updater: NSObject, ObservableObject, SPUUpdaterDelegate {
     private lazy var controller = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: self, userDriverDelegate: nil)
     private var observation: NSKeyValueObservation?
 
-    @Published private(set) var automaticallyChecks = false
+    // Sparkle's own preference, falling back to the Info.plist default, until `start()` takes over.
+    @Published private(set) var automaticallyChecks = UserDefaults.standard.object(forKey: "SUEnableAutomaticChecks") as? Bool
+        ?? Bundle.main.object(forInfoDictionaryKey: "SUEnableAutomaticChecks") as? Bool ?? true
 
     func start() {
         let updater = controller.updater

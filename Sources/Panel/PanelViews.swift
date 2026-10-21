@@ -172,7 +172,7 @@ private struct DashboardScreen: View {
 
                 GroupSection(title: "Lid Open", symbol: "sun.max", help: HelpText.lidOpen) {
                     SettingRow("Keep Awake") {
-                        Toggle("", isOn: Binding(
+                        Toggle("Keep Awake", isOn: Binding(
                             get: { controller.keepAwake },
                             set: { controller.setKeepAwake($0) }
                         ))
@@ -187,7 +187,7 @@ private struct DashboardScreen: View {
                     help: HelpText.lidClosed
                 ) {
                     SettingRow("Keep Awake") {
-                        Toggle("", isOn: Binding(
+                        Toggle("Keep Awake", isOn: Binding(
                             get: { controller.lidClosed },
                             set: { on in
                                 guard !controller.setLidClosedQuietly(on) else { return }
@@ -201,14 +201,14 @@ private struct DashboardScreen: View {
                     // What happens to the screen; still adjustable while lid mode is off, but dimmed.
                     Group {
                         SettingRow("Sleep Display") {
-                            Toggle("", isOn: Binding(
+                            Toggle("Sleep Display", isOn: Binding(
                                 get: { controller.lidSleepDisplay },
                                 set: { controller.setLidSleepDisplay($0) }
                             ))
                             .settingsSwitchStyle()
                         }
                         SettingRow("Lock Screen") {
-                            Toggle("", isOn: Binding(
+                            Toggle("Lock Screen", isOn: Binding(
                                 get: { controller.lidLockScreen },
                                 set: { controller.setLidLockScreen($0) }
                             ))
@@ -221,7 +221,7 @@ private struct DashboardScreen: View {
 
                 GroupSection(title: "Battery", symbol: "battery.75percent", help: HelpText.battery) {
                     SettingRow("Auto-off at 20%") {
-                        Toggle("", isOn: Binding(
+                        Toggle("Auto-off at 20%", isOn: Binding(
                             get: { controller.autoOff },
                             set: { controller.setAutoOff($0) }
                         ))
@@ -338,14 +338,14 @@ private struct SettingsScreen: View {
             VStack(alignment: .leading, spacing: PanelMetrics.sectionSpacing) {
                 SettingsSection("General") {
                     SettingRow("Launch at Login") {
-                        Toggle("", isOn: Binding(
+                        Toggle("Launch at Login", isOn: Binding(
                             get: { controller.launchAtLogin },
                             set: { controller.setLaunchAtLogin($0) }
                         ))
                         .settingsSwitchStyle()
                     }
                     SettingRow("Show in Menu Bar") {
-                        Toggle("", isOn: $showMenuBarItem).settingsSwitchStyle()
+                        Toggle("Show in Menu Bar", isOn: $showMenuBarItem).settingsSwitchStyle()
                     }
                     Footnote("When hidden, open Restless again to show its settings.")
                 }
@@ -387,7 +387,7 @@ private struct SettingsScreen: View {
                         }
                     }
                     SettingRow("Check Automatically") {
-                        Toggle("", isOn: Binding(
+                        Toggle("Check Automatically", isOn: Binding(
                             get: { updater.automaticallyChecks },
                             set: { updater.setAutomaticallyChecks($0) }
                         ))
@@ -650,7 +650,7 @@ enum AppVersion {
 enum AboutPanel {
     static func present() {
         let credits = NSAttributedString(
-            string: "Keeps your Mac awake, even with the lid closed.\nPanel design adapted from OpenUsage (MIT).",
+            string: "Keeps your Mac awake, even with the lid closed.\nBased on Amped by Gustaf Eriksson; panel adapted from OpenUsage. Both MIT licensed.",
             attributes: [
                 .font: NSFont.systemFont(ofSize: 11),
                 .foregroundColor: NSColor.secondaryLabelColor,

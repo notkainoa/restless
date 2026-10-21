@@ -24,10 +24,13 @@ unsigned build compiles.
    It prompts for the password, so it never lands in your shell history.
 4. **Sparkle signing key.** The private EdDSA key is in the login keychain
    under the account `restless`; its public half is `SUPublicEDKey` in
-   `project.yml`. Back it up somewhere safe:
+   `project.yml`. Back it up somewhere safe, such as a password manager. Run
+   `./build.sh` once first, so Sparkle's tools are downloaded, then:
    ```sh
-   .build/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_keys --account restless -x restless-sparkle-key.txt
+   .build/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_keys --account restless -x "$HOME/restless-sparkle-key.txt"
    ```
+   Move that file into your password manager and delete it. **Never commit it**:
+   anyone with this key can sign updates that every installed copy will accept.
    Without it, no future release can update existing installs.
 
 ## Every release

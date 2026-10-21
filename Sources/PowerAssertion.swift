@@ -9,7 +9,7 @@ final class PowerAssertion {
         self.type = type
     }
 
-    func enable(reason: String = "Amped is keeping this Mac awake") {
+    func enable(reason: String = "Restless is keeping this Mac awake") {
         guard id == nil else { return }
         var newID = IOPMAssertionID(0)
         let result = IOPMAssertionCreateWithName(

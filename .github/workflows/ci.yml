@@ -24,8 +24,8 @@ jobs:
       - name: Verify the app icon compiled into the bundle
         run: |
           set -euo pipefail
-          test -f dist/Amped.app/Contents/Resources/Assets.car
-          test -d dist/Amped.app/Contents/PlugIns/AmpedControl.appex
-          name=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIconName" dist/Amped.app/Contents/Info.plist)
+          test -f dist/Restless.app/Contents/Resources/Assets.car
+          test -d dist/Restless.app/Contents/PlugIns/RestlessControl.appex
+          name=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIconName" dist/Restless.app/Contents/Info.plist)
           [ "$name" = "AppIcon" ] || { echo "CFBundleIconName is '$name', expected AppIcon"; exit 1; }
           echo "✅ icon present (Assets.car + CFBundleIconName=AppIcon)"

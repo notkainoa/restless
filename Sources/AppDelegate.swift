@@ -11,7 +11,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 #endif
-        AppUpdater.registerDefaults()
         panelController = PanelController(controller: SleepController.shared)
 #if DEBUG
         if let output = UserDefaults.standard.string(forKey: "panelSnapshot").map({ URL(filePath: $0) }) {
@@ -19,18 +18,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { self.panelController?.snapshot(to: output, screen: screen) }
         }
 #endif
-#if !DEBUG
-        if UserDefaults.standard.bool(forKey: AppUpdater.checksAutomaticallyKey) {
-            AppUpdater.check(manual: false)
-        }
-#endif
+        Updater.shared.start()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
         SleepController.shared.cleanup()
     }
 
-    // Opening Amped again shows its settings: in the panel, or in a window while the menu bar item is hidden.
+    // Opening Restless again shows its settings: in the panel, or in a window while the menu bar item is hidden.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if let panelController, panelController.canShowPanel {
             panelController.showSettings()

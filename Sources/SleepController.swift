@@ -52,6 +52,7 @@ final class SleepController: ObservableObject {
     }
 
     private init() {
+        Self.importAmpedSettings()
         Self.migrateLegacyLidCloseAction()
         UserDefaults.standard.register(defaults: [
             Self.lastKeepAwakeKey: true,
@@ -114,14 +115,32 @@ final class SleepController: ObservableObject {
         // The app-group container prompts in unsigned builds, which would block a layout snapshot.
         if UserDefaults.standard.string(forKey: "panelSnapshot") != nil || SettingsSnapshot.output != nil { return }
 #endif
-        let group = UserDefaults(suiteName: AmpedDefaults.suiteName)
-        group?.set(keepAwake || lidClosed, forKey: AmpedDefaults.isActiveKey)
-        group?.set(lidClosed, forKey: AmpedDefaults.lidClosedKey)
-        group?.set(autoOff, forKey: AmpedDefaults.autoOffKey)
+        let group = UserDefaults(suiteName: RestlessDefaults.suiteName)
+        group?.set(keepAwake || lidClosed, forKey: RestlessDefaults.isActiveKey)
+        group?.set(lidClosed, forKey: RestlessDefaults.lidClosedKey)
+        group?.set(autoOff, forKey: RestlessDefaults.autoOffKey)
         ControlCenter.shared.reloadAllControls()
     }
 
     // 1.0.1 stored one lid choice; it maps onto the two switches.
+    /// Restless started as a fork of Amped; carry over its settings the first time Restless runs.
+    private static func importAmpedSettings() {
+        let defaults = UserDefaults.standard
+        let importedKey = "importedAmpedSettings"
+        guard !defaults.bool(forKey: importedKey) else { return }
+        defaults.set(true, forKey: importedKey)
+        guard let amped = UserDefaults(suiteName: "dev.gustaf.Amped") else { return }
+        let keys = [autoOffKey, lidSleepDisplayKey, lidLockScreenKey, legacyLidCloseActionKey,
+                    lastKeepAwakeKey, lastLidClosedKey, SettingsView.showMenuBarItemKey]
+        for key in keys where defaults.object(forKey: key) == nil {
+            if let value = amped.object(forKey: key) { defaults.set(value, forKey: key) }
+        }
+        if let checks = amped.object(forKey: "ChecksForUpdatesAutomatically") as? Bool,
+           defaults.object(forKey: "SUEnableAutomaticChecks") == nil {
+            defaults.set(checks, forKey: "SUEnableAutomaticChecks")
+        }
+    }
+
     private static func migrateLegacyLidCloseAction() {
         let defaults = UserDefaults.standard
         guard let legacy = defaults.string(forKey: legacyLidCloseActionKey) else { return }
@@ -314,24 +333,13 @@ final class SleepController: ObservableObject {
     }
 
     var menuBarSymbolName: String {
-        if lidClosed { return "pills.fill" }
-        if keepAwake { return "pill.fill" }
-        return "pill"
+        if lidClosed { return "eye.fill" }
+        if keepAwake { return "eye" }
+        return "eye.slash"
     }
 
     // Dimmed while the lid-closed mode will turn the screen off and nothing keeps it on with the lid open.
     var menuBarSymbolDimmed: Bool {
         lidClosed && !keepAwake && lidSleepDisplay
-    }
-
-    var statusText: String {
-        let battery = batteryPercent.map { " · \($0)%" } ?? ""
-        if lidClosed {
-            let display = lidSleepDisplay ? "display off" : "display on"
-            let lock = lidLockScreen ? "locked" : "unlocked"
-            return "Awake — lid closed: \(display), \(lock)\(battery)"
-        }
-        if keepAwake { return "Awake\(battery)" }
-        return "Sleep allowed\(battery)"
     }
 }

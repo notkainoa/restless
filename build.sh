@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build Amped.app locally and drop it in ./dist.
+# Build Restless.app locally and drop it in ./dist.
 # Requires: Xcode, xcodegen (brew install xcodegen), rsvg-convert (brew install librsvg).
 #
 # Local (ad-hoc) build — helper inactive, lid mode falls back to a password prompt:
@@ -50,24 +50,24 @@ xcodegen generate
 
 echo "▸ Building (Release)…  signing identity: ${SIGN_ID}"
 xcodebuild \
-  -project Amped.xcodeproj \
-  -scheme Amped \
+  -project Restless.xcodeproj \
+  -scheme Restless \
   -configuration Release \
   -derivedDataPath .build \
   "${SIGN_ARGS[@]}" \
   build
 
-APP=".build/Build/Products/Release/Amped.app"
+APP=".build/Build/Products/Release/Restless.app"
 mkdir -p dist
-rm -rf "dist/Amped.app"
-cp -R "$APP" "dist/Amped.app"
+rm -rf "dist/Restless.app"
+cp -R "$APP" "dist/Restless.app"
 
 echo ""
 if [[ "$SIGN_ID" == "-" ]]; then
-  echo "✅ Built dist/Amped.app  (ad-hoc — helper inactive, password fallback)"
+  echo "✅ Built dist/Restless.app  (ad-hoc — helper inactive, password fallback)"
 else
-  echo "✅ Built dist/Amped.app  (Developer ID, hardened runtime, secure timestamp)"
+  echo "✅ Built dist/Restless.app  (Developer ID, hardened runtime, secure timestamp)"
   echo "   Notarize: ./notarize.sh"
 fi
-echo "   Launch:   open dist/Amped.app"
-echo "   Install:  cp -R dist/Amped.app /Applications/"
+echo "   Launch:   open dist/Restless.app"
+echo "   Install:  cp -R dist/Restless.app /Applications/"

@@ -1,5 +1,5 @@
 // Adapted from OpenUsage's HoverTooltip (MIT, Copyright (c) 2026 Robin Ebers). See THIRD_PARTY_NOTICES.md.
-// Amped adds Markdown text, left-aligned text, paragraphs placed beside the panel, and showing on click.
+// Restless adds Markdown text, left-aligned text, paragraphs placed beside the panel, and showing on click.
 import AppKit
 import SwiftUI
 

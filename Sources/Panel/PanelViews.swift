@@ -240,7 +240,7 @@ private struct DashboardScreen: View {
     }
 }
 
-/// What Amped is doing right now, at a glance. Its height never changes, so the groups below don't
+/// What Restless is doing right now, at a glance. Its height never changes, so the groups below don't
 /// shift when the state does.
 private struct StatusCard: View {
     @EnvironmentObject private var controller: SleepController
@@ -250,9 +250,9 @@ private struct StatusCard: View {
     private var isAwake: Bool { controller.keepAwake || controller.lidClosed }
 
     private var symbol: String {
-        if controller.lidClosed { return "pills.fill" }
-        if controller.keepAwake { return "pill.fill" }
-        return "zzz"
+        if controller.lidClosed { return "eye.fill" }
+        if controller.keepAwake { return "eye" }
+        return "eye.slash"
     }
 
     private var title: String {
@@ -331,7 +331,7 @@ private struct SettingsScreen: View {
     @EnvironmentObject private var controller: SleepController
     @Environment(PanelNavigation.self) private var navigation
     @AppStorage(SettingsView.showMenuBarItemKey, store: SettingsView.store) private var showMenuBarItem = true
-    @AppStorage(AppUpdater.checksAutomaticallyKey, store: SettingsView.store) private var checksAutomatically = true
+    @ObservedObject private var updater = Updater.shared
 
     var body: some View {
         PopoverScrollView {
@@ -347,7 +347,7 @@ private struct SettingsScreen: View {
                     SettingRow("Show in Menu Bar") {
                         Toggle("", isOn: $showMenuBarItem).settingsSwitchStyle()
                     }
-                    Footnote("When hidden, open Amped again to show its settings.")
+                    Footnote("When hidden, open Restless again to show its settings.")
                 }
 
                 SettingsSection("Lid Closed") {
@@ -387,19 +387,23 @@ private struct SettingsScreen: View {
                         }
                     }
                     SettingRow("Check Automatically") {
-                        Toggle("", isOn: $checksAutomatically).settingsSwitchStyle()
+                        Toggle("", isOn: Binding(
+                            get: { updater.automaticallyChecks },
+                            set: { updater.setAutomaticallyChecks($0) }
+                        ))
+                        .settingsSwitchStyle()
                     }
                     HStack(spacing: 8) {
                         Button {
-                            MenuBarPopover.dismissThen { AppUpdater.check(manual: true) }
+                            MenuBarPopover.dismissThen { Updater.shared.checkForUpdates() }
                         } label: {
                             Text("Check Now").frame(maxWidth: .infinity)
                         }
-                        .hoverTooltip("Looks for a newer release on GitHub")
+                        .hoverTooltip("Looks for a newer version and installs it")
                         Button {
                             MenuBarPopover.dismissThen(AboutPanel.present)
                         } label: {
-                            Text("About Amped").frame(maxWidth: .infinity)
+                            Text("About Restless").frame(maxWidth: .infinity)
                         }
                     }
                     .buttonStyle(.glass)
@@ -598,7 +602,7 @@ private struct OptionsMenu: View {
             .keyboardShortcut(",")
 
             Button {
-                MenuBarPopover.dismissThen { AppUpdater.check(manual: true) }
+                MenuBarPopover.dismissThen { Updater.shared.checkForUpdates() }
             } label: {
                 Label("Check for Updates…", systemImage: "arrow.triangle.2.circlepath")
             }
@@ -608,12 +612,12 @@ private struct OptionsMenu: View {
             Button {
                 MenuBarPopover.dismissThen(AboutPanel.present)
             } label: {
-                Label("About Amped", systemImage: "info.circle")
+                Label("About Restless", systemImage: "info.circle")
             }
             Button(role: .destructive) {
                 NSApp.terminate(nil)
             } label: {
-                Label("Quit Amped", systemImage: "power")
+                Label("Quit Restless", systemImage: "power")
             }
             .keyboardShortcut("q")
         } label: {
@@ -670,9 +674,9 @@ enum HelpText {
     """
 
     static let lidClosed = """
-    **Keep Awake** keeps your Mac running with the lid closed, so SSH, downloads, and agents keep going. It needs Amped's helper or your password, and turns off when Amped quits.
+    **Keep Awake** keeps your Mac running with the lid closed, so SSH, downloads, and agents keep going. It needs the Restless helper or your password, and turns off when you quit Restless.
 
-    **Sleep Display** turns the screen off when the lid closes. Turn it off when a computer-use agent needs to see the screen; Amped keeps it on at zero brightness instead.
+    **Sleep Display** turns the screen off when the lid closes. Turn it off when a computer-use agent needs to see the screen; Restless keeps it on at zero brightness instead.
 
     **Lock Screen** locks your Mac when the lid closes. Turn it off only when an agent needs the desktop, since computer use can't get past the lock screen.
 

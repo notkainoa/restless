@@ -13,7 +13,7 @@ struct SleepSettings: View {
             } header: {
                 Text("Lid open")
             } footer: {
-                Text("Stops your Mac and its screen from sleeping when idle while the lid is open. Always off when Amped starts, and released when it quits.")
+                Text("Stops your Mac and its screen from sleeping when idle while the lid is open. Always off when Restless starts, and released when it quits.")
             }
 
             Section {
@@ -32,7 +32,7 @@ struct SleepSettings: View {
             } header: {
                 Text("Lid closed")
             } footer: {
-                Text("Keep awake keeps your Mac running when you close the lid. It changes a system power setting, needs Amped’s helper or an administrator password, and Amped turns it back off when it quits. Sleep display turns the screen off when the lid closes; turn it off when a computer-use agent needs to see the screen, and Amped keeps it drawing at zero brightness instead. Lock screen locks the Mac when the lid closes; with it off, anyone who opens the lid can use the Mac without a password. Neither applies while an external display is connected.")
+                Text("Keep awake keeps your Mac running when you close the lid. It changes a system power setting, needs Restless’s helper or an administrator password, and Restless turns it back off when it quits. Sleep display turns the screen off when the lid closes; turn it off when a computer-use agent needs to see the screen, and Restless keeps it drawing at zero brightness instead. Lock screen locks the Mac when the lid closes; with it off, anyone who opens the lid can use the Mac without a password. Neither applies while an external display is connected.")
             }
 
             Section {

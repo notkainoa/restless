@@ -2,7 +2,7 @@
 
 The menu bar panel in `Sources/Panel/` adapts code and design from
 [OpenUsage](https://github.com/robinebers/openusage). OpenUsage is a trademark of
-Robin Ebers; Amped is not affiliated with or endorsed by OpenUsage.
+Robin Ebers; Restless is not affiliated with or endorsed by OpenUsage.
 
 ```
 MIT License

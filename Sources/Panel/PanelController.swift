@@ -51,7 +51,7 @@ final class MenuBarPanel: NSPanel {
     override var canBecomeMain: Bool { false }
 }
 
-/// Owns the status item and the panel that shows Amped's controls.
+/// Owns the status item and the panel that shows Restless's controls.
 @MainActor
 final class PanelController: NSObject {
     private let controller: SleepController
@@ -237,7 +237,7 @@ final class PanelController: NSObject {
         let key = "\(controller.menuBarSymbolName)-\(controller.menuBarSymbolDimmed)"
         guard key != iconKey else { return }
         iconKey = key
-        var image = NSImage(systemSymbolName: controller.menuBarSymbolName, accessibilityDescription: "Amped")
+        var image = NSImage(systemSymbolName: controller.menuBarSymbolName, accessibilityDescription: "Restless")
         if controller.menuBarSymbolDimmed {
             image = image?.withSymbolConfiguration(.preferringHierarchical())
         }
@@ -262,7 +262,7 @@ final class PanelController: NSObject {
             self?.showSettings()
         })
         menu.addItem(.separator())
-        menu.addItem(ClosureMenuItem(title: "Quit Amped", systemSymbol: "power", keyEquivalent: "q") {
+        menu.addItem(ClosureMenuItem(title: "Quit Restless", systemSymbol: "power", keyEquivalent: "q") {
             NSApp.terminate(nil)
         })
         statusItem.menu = menu

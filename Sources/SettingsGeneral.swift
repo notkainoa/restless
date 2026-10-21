@@ -3,7 +3,7 @@ import SwiftUI
 struct GeneralSettings: View {
     @ObservedObject var controller: SleepController
     @AppStorage(SettingsView.showMenuBarItemKey, store: SettingsView.store) private var showMenuBarItem = true
-    @AppStorage(AppUpdater.checksAutomaticallyKey, store: SettingsView.store) private var checksForUpdatesAutomatically = true
+    @ObservedObject private var updater = Updater.shared
 
     var body: some View {
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
@@ -13,7 +13,7 @@ struct GeneralSettings: View {
             } header: {
                 Text("Menu Bar")
             } footer: {
-                Text("When hidden, open Amped again to show Settings.")
+                Text("When hidden, open Restless again to show Settings.")
             }
 
             Section {
@@ -25,12 +25,12 @@ struct GeneralSettings: View {
 
             Section("Updates") {
                 LabeledContent {
-                    Button("Check for Updates…") { AppUpdater.check(manual: true) }
+                    Button("Check for Updates…") { Updater.shared.checkForUpdates() }
                 } label: {
-                    Text("Amped \(version)")
+                    Text("Restless \(version)")
                     if version.hasSuffix("-local") { Text("Local build") }
                 }
-                Toggle("Check for updates automatically", isOn: $checksForUpdatesAutomatically)
+                Toggle("Check for updates automatically", isOn: Binding(get: { updater.automaticallyChecks }, set: { updater.setAutomaticallyChecks($0) }))
             }
         }
         .formStyle(.grouped)

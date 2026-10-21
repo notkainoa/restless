@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct AmpedApp: App {
+struct RestlessApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var controller = SleepController.shared
 

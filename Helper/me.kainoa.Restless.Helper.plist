@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>dev.gustaf.Amped.Helper</string>
+    <string>me.kainoa.Restless.Helper</string>
     <key>BundleProgram</key>
-    <string>Contents/MacOS/AmpedHelper</string>
+    <string>Contents/MacOS/RestlessHelper</string>
     <key>MachServices</key>
     <dict>
-        <key>dev.gustaf.Amped.Helper</key>
+        <key>me.kainoa.Restless.Helper</key>
         <true/>
     </dict>
     <key>AssociatedBundleIdentifiers</key>
     <array>
-        <string>dev.gustaf.Amped</string>
+        <string>me.kainoa.Restless</string>
     </array>
 </dict>
 </plist>

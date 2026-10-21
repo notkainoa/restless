@@ -14,7 +14,7 @@ enum Prompts {
         alert.messageText = "Keep the Mac awake with the lid closed?"
         alert.informativeText = """
         This needs a small background helper that runs with elevated rights. \
-        macOS will ask you to approve “Amped” once under Login Items & \
+        macOS will ask you to approve “Restless” once under Login Items & \
         Extensions — after that the lid toggle never asks for a password.
 
         Prefer not to? “Just This Time” keeps the Mac awake now with a single \
@@ -35,10 +35,10 @@ enum Prompts {
     static func explainHelperApproval() {
         let alert = NSAlert()
         alert.alertStyle = .informational
-        alert.messageText = "Approve Amped’s background helper"
+        alert.messageText = "Approve the Restless background helper"
         alert.informativeText = """
         In the window that just opened (Login Items & Extensions), turn on \
-        “Amped”. Then turn on Lid Closed Keep Awake again; it won't ask for a password after that.
+        “Restless”. Then turn on Lid Closed Keep Awake again; it won't ask for a password after that.
         """
         alert.addButton(withTitle: "OK")
         NSApp.activate()

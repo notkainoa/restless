@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Renders icon/amped.svg into the AppIcon asset catalog (all macOS sizes).
+# Renders icon/restless.svg into the AppIcon asset catalog (all macOS sizes).
 # Requires: rsvg-convert (brew install librsvg) and sips (built in).
 set -euo pipefail
 cd "$(dirname "$0")"
 
-SVG="amped.svg"
+SVG="restless.svg"
 OUT="../Resources/Assets.xcassets/AppIcon.appiconset"
-MASTER="$(mktemp -t amped-master).png"
+MASTER="$(mktemp -t restless-master).png"
 
 rsvg-convert -w 1024 -h 1024 "$SVG" -o "$MASTER"
 

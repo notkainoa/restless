@@ -91,10 +91,10 @@ offer comes back the next time you turn on lid-closed mode.
 
 ## Build and run
 
-You need Xcode plus two Homebrew tools:
+You need Xcode and XcodeGen:
 
 ```sh
-brew install xcodegen librsvg
+brew install xcodegen
 ./build.sh              # builds into ./dist
 open dist/Restless.app
 ```
@@ -108,7 +108,7 @@ for an ad-hoc build.
 To work in Xcode:
 
 ```sh
-./icon/generate-icons.sh && xcodegen generate && open Restless.xcodeproj
+xcodegen generate && open Restless.xcodeproj
 ```
 
 The `.xcodeproj` is generated from `project.yml` and isn't committed.
@@ -126,9 +126,12 @@ See [`docs/RELEASING.md`](docs/RELEASING.md) for the one-time setup.
 
 ## The icon
 
-The app icon is `icon/restless.svg`: an open eye with a moon for its iris, on
-a night-sky tile. `icon/generate-icons.sh` renders it into the asset catalog
-at every macOS size.
+The app icon is an open eye with a moon for its iris: dark purple on white in
+light mode, light purple on dark purple in dark mode. It's an Icon Composer
+file, `icon/AppIcon.icon`, built from the layer SVGs in its `Assets` folder, so
+macOS switches it with the system appearance and can tint it. Open it in Icon
+Composer to edit it. `icon/restless-light.svg` and `icon/restless-dark.svg` are
+the flat versions, for anywhere else the icon is needed.
 
 ## The App Store
 
@@ -160,7 +163,7 @@ Shared/                  (compiled into the app and the helper)
   HelperProtocol.swift    the XPC contract
   HelperConstants.swift   identifiers and service names
   CodeSigning.swift       Team ID requirement helpers
-icon/                    restless.svg and its render script
+icon/                    AppIcon.icon (Icon Composer) and flat SVGs
 project.yml              XcodeGen project
 build.sh                 local or signed build
 notarize.sh              notarytool submit and stapler staple

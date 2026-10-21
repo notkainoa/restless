@@ -29,9 +29,8 @@ targets:
     sources:
       - path: Sources
       - path: Shared
-      # The asset catalog (app icon) must live under `sources` — XcodeGen has no
-      # `resources` key and silently ignores it, which would drop the icon.
-      - path: Resources/Assets.xcassets
+      # The Icon Composer icon, with light, dark and tinted appearances.
+      - path: icon/AppIcon.icon
       - path: RestlessControl/ControlIntents.swift
     dependencies:
       - package: Sparkle

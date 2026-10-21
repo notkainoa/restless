@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build Restless.app locally and drop it in ./dist.
-# Requires: Xcode, xcodegen (brew install xcodegen), rsvg-convert (brew install librsvg).
+# Requires: Xcode and xcodegen (brew install xcodegen).
 #
 # Local (ad-hoc) build — helper inactive, lid mode falls back to a password prompt:
 #     ./build.sh
@@ -41,9 +41,6 @@ if [[ -z "${MARKETING_VERSION:-}" ]]; then
 fi
 SIGN_ARGS+=( "MARKETING_VERSION=${MARKETING_VERSION}" )
 [[ -n "${CURRENT_PROJECT_VERSION:-}" ]] && SIGN_ARGS+=( "CURRENT_PROJECT_VERSION=${CURRENT_PROJECT_VERSION}" )
-
-echo "▸ Generating app icon…"
-./icon/generate-icons.sh
 
 echo "▸ Generating Xcode project…"
 xcodegen generate

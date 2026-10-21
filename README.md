@@ -5,7 +5,7 @@ Amphetamine-style alternative whose party trick is keeping the Mac awake **with
 the lid closed**, using `pmset disablesleep` rather than `caffeinate` alone.
 
 No window, no settings sheet, no Dock icon. Just a pill in your menu bar and a
-handful of switches.
+handful of settings.
 
 ## Install
 
@@ -18,14 +18,25 @@ Check for Updates looks at that releases page and, when a newer build exists, op
 
 ## The menu
 
-Click the pill in the menu bar:
+Click the pill in the menu bar. Settings are grouped by lid position; the two
+*Keep Awake* rows are switches and the rest are checkmarks, and changing any of
+them leaves the menu open. Hover or click the **?** next to a group for an
+explanation of its settings.
 
-| Toggle | What it does |
+| Setting | What it does |
 | --- | --- |
-| **Keep Awake (When Lid Is Open)** | Prevents idle sleep while the lid is open. Uses an IOKit power assertion (same mechanism as `caffeinate`). No password needed. |
-| **When Lid Is Closed** | One choice: **Off**, **Keep Awake but Lock the Screen**, or **Keep Awake and Keep Screen Unlocked**. Off lets the lid sleep the Mac. The other two keep it running with `pmset -a disablesleep 1`. **Keep Awake but Lock the Screen** locks the screen and turns the display off when you close the lid without an external display. Suppressing sleep also suppresses the usual lock-on-sleep, which is why Amped locks instead. **Keep Awake and Keep Screen Unlocked** leaves the desktop unlocked and turns the built-in backlight off, so the screen keeps drawing and can still be controlled. Anyone who opens the lid can use the Mac without a password. |
+| **Lid Open → Keep Awake** | Prevents idle sleep, and keeps the screen on, while the lid is open. Uses IOKit power assertions (same mechanism as `caffeinate`). No password needed. |
+| **Lid Closed → Keep Awake** | Keeps the Mac running with the lid closed, using `pmset -a disablesleep 1`. Off lets the lid sleep the Mac. |
+| **Lid Closed → Sleep Display** | Turns the display off when the lid closes. Off keeps the screen drawing at zero brightness, so a computer-use agent can still see and control it. |
+| **Lid Closed → Lock Screen** | Locks the Mac when the lid closes. Suppressing sleep also suppresses the usual lock-on-sleep, which is why Amped locks instead. Off leaves the desktop usable by anyone who opens the lid. |
 | **Auto-off at 20% Battery** | Safety net: when on battery and the charge drops to 20% or below, Amped releases everything so the Mac can sleep normally. Remembered between launches. |
 | **Launch at Login** | Registers Amped as a login item (via `SMAppService`) so the pill is there every time you log in. |
+
+*Sleep Display* and *Lock Screen* can be changed while lid-closed mode is
+off, so you can set them up ahead of time, and do nothing while an external
+display is connected. With *Sleep Display* on and *Lock Screen* off, macOS can
+still lock the Mac if Lock Screen settings require a password when the display
+turns off.
 
 The menu bar pill reflects the state at a glance:
 
@@ -145,9 +156,8 @@ feature.
 
 ```
 Sources/                 (the app)
-  AmpedApp.swift          @main App + MenuBarExtra
-  MenuContent.swift       the dropdown (toggles + status + quit)
-  MenuBarLabel.swift      the pill SF Symbol that reflects state
+  AmpedApp.swift          @main App (the Settings window)
+  StatusMenu.swift        the menu bar pill and its menu (switches, checkmarks, ? panels)
   SleepController.swift   state, battery polling, auto-off safety net
   PowerAssertion.swift    IOKit power assertion wrapper (idle sleep)
   Privileged.swift        routes pmset to the helper, else an admin prompt

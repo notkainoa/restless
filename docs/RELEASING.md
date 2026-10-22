@@ -1,30 +1,56 @@
-# Releasing Amped
+# Releasing Restless
 
-Pushing to `main` publishes a GitHub Release. That build is ad-hoc signed and
-not notarized. People download the zip from the latest release, replace
-`Amped.app`, and right-click → Open the first time.
+Releases are built on a Mac, not in CI, because they need the Developer ID
+certificate, Apple's notary service and the Sparkle signing key, all of which
+live in the login keychain. CI (`.github/workflows/ci.yml`) only checks that an
+unsigned build compiles.
 
-Check for Updates asks GitHub for that release. When a newer version exists, it
-opens the release page. It does not replace the app.
+## One-time setup
 
-## What runs
+1. **Developer ID certificate.** "Developer ID Application" for team
+   `VW9NDM428H` must be in the login keychain. Check with:
+   ```sh
+   security find-identity -v -p codesigning
+   ```
+2. **`.env`.** Copy it from `.env.example`. It sets the team, the signing
+   identity and `NOTARY_PROFILE=Restless`.
+3. **Notary credentials.** Create an app-specific password for the team's
+   Apple ID at appleid.apple.com → Sign-In & Security → App-Specific Passwords.
+   Then store it as the `Restless` keychain profile:
+   ```sh
+   xcrun notarytool store-credentials "Restless" \
+     --apple-id "APPLE_ID_EMAIL" --team-id VW9NDM428H
+   ```
+   It prompts for the password, so it never lands in your shell history.
+4. **Sparkle signing key.** The private EdDSA key is in the login keychain
+   under the account `restless`; its public half is `SUPublicEDKey` in
+   `project.yml`. Back it up somewhere safe, such as a password manager. Run
+   `./build.sh` once first, so Sparkle's tools are downloaded, then:
+   ```sh
+   .build/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_keys --account restless -x "$HOME/restless-sparkle-key.txt"
+   ```
+   Move that file into your password manager and delete it. **Never commit it**:
+   anyone with this key can sign updates that every installed copy will accept.
+   Without it, no future release can update existing installs.
 
-| Workflow | Trigger | What it does |
-| --- | --- | --- |
-| `.github/workflows/ci.yml` | every push and pull request | Unsigned build; asserts the app icon is in the bundle. |
-| `.github/workflows/release.yml` | every push to `main` | Same kind of build, zipped as `Amped-<version>.zip` and attached to a GitHub Release. |
+## Every release
 
-The version is `MARKETING_VERSION` from `project.yml`, plus the Actions run
-number. `1.0` in the project becomes `1.0.1`, then `1.0.2`, and so on. The tag
-is `v1.0.1`. Change `MARKETING_VERSION` when you want the first two numbers to
-move.
+From an up-to-date, clean `main`:
 
-No Apple certificate, notarization secret, or Homebrew token is required.
-Notarization stays a separate local step (`./notarize.sh`) for when a download
-should open without the right-click.
+```sh
+./release.sh 1.1.0
+```
 
-## Ship a build
+It runs these steps:
 
-Merge or push to `main`. The release workflow builds on the `xcode-27` runner
-and publishes the zip. The download is on the
-[Releases page](https://github.com/notkainoa/amped/releases/latest).
+1. Builds and signs `Restless.app` with version `1.1.0`. The build number is
+   the commit count on `main`, which only grows, and that's what Sparkle
+   compares.
+2. Notarizes and staples the app.
+3. Zips the app. Sparkle's `generate_appcast` then signs the zip and writes
+   `appcast.xml`.
+4. Publishes the GitHub release `v1.1.0` with both files attached.
+
+The app's feed is
+`https://github.com/notkainoa/restless/releases/latest/download/appcast.xml`,
+so every installed copy sees the new release as soon as it's published.

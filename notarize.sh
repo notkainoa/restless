@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Notarize and staple dist/Amped.app. Run after a signed ./build.sh.
+# Notarize and staple dist/Restless.app. Run after a signed ./build.sh.
 #
 # notarytool needs credentials. Two ways, pick one:
 #
@@ -7,10 +7,10 @@
 #      password from appleid.apple.com → Sign-In & Security → App-Specific
 #      Passwords, NOT your Apple ID password:
 #
-#        xcrun notarytool store-credentials "Amped" \
-#          --apple-id "you@example.com" --team-id 82K3YC8HVF --password "xxxx-xxxx-xxxx-xxxx"
+#        xcrun notarytool store-credentials "Restless" \
+#          --apple-id "you@example.com" --team-id VW9NDM428H --password "xxxx-xxxx-xxxx-xxxx"
 #
-#      Then set NOTARY_PROFILE=Amped in .env.
+#      Then set NOTARY_PROFILE=Restless in .env.
 #
 #   2) App Store Connect API key (headless / CI). Create a key at
 #      appstoreconnect.apple.com → Users and Access → Integrations → App Store
@@ -34,8 +34,8 @@ else
   echo "✗ No notarytool credentials. Set NOTARY_PROFILE, or NOTARY_KEY + NOTARY_KEY_ID + NOTARY_ISSUER (see this file's header)."; exit 1
 fi
 
-APP="dist/Amped.app"
-ZIP="dist/Amped.zip"
+APP="dist/Restless.app"
+ZIP="dist/Restless.zip"
 
 [[ -d "$APP" ]] || { echo "✗ $APP not found — run a signed ./build.sh first."; exit 1; }
 if codesign -dvv "$APP" 2>&1 | grep -q "Signature=adhoc"; then

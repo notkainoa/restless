@@ -9,7 +9,7 @@ struct AboutSettings: View {
             Image(nsImage: NSApp.applicationIconImage)
                 .resizable()
                 .frame(width: 96, height: 96)
-            Text("Amped")
+            Text("Restless")
                 .font(.title.bold())
             Text("Version \(version) (\(build))")
                 .foregroundStyle(.secondary)

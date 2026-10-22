@@ -9,9 +9,11 @@ struct SettingsView: View {
     static let store: UserDefaults = {
 #if DEBUG
         if SettingsSnapshot.output != nil {
-            let suite = "dev.gustaf.Amped.snapshot"
+            let suite = "me.kainoa.Restless.snapshot"
             UserDefaults.standard.removePersistentDomain(forName: suite)
-            return UserDefaults(suiteName: suite) ?? .standard
+            let store = UserDefaults(suiteName: suite) ?? .standard
+            if let tab = UserDefaults.standard.string(forKey: "settingsSnapshotTab") { store.set(tab, forKey: "settingsTab") }
+            return store
         }
 #endif
         return .standard

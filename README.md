@@ -1,172 +1,179 @@
-# Amped ⚊
+# Restless
 
-A tiny, completely native macOS menu bar app that keeps your Mac awake — an
-Amphetamine-style alternative whose party trick is keeping the Mac awake **with
-the lid closed**, using `pmset disablesleep` rather than `caffeinate` alone.
+A small, fully native macOS menu bar app that keeps your Mac awake, **even
+with the lid closed**. Close the lid and SSH sessions, downloads, builds and
+AI agents keep running.
 
-No window, no settings sheet, no Dock icon. Just a pill in your menu bar and a
-handful of switches.
+Restless began as a fork of [Amped](https://github.com/gustaferiksson/amped)
+by Gustaf Eriksson and has since been rewritten around a new panel, separate
+lid-closed screen settings, Sparkle updates and its own branding. Amped's MIT
+license and copyright notice are kept in [`LICENSE`](LICENSE). The panel's
+design and some of its code are adapted from
+[OpenUsage](https://github.com/robinebers/openusage), also MIT; see
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md). Restless isn't affiliated
+with either project.
 
 ## Install
 
-Download `Amped.app` from the [latest release](https://github.com/notkainoa/amped/releases/latest),
-unzip it, and move it to `/Applications`. macOS 26 (Tahoe) or newer.
+Download `Restless-<version>.zip` from the
+[latest release](https://github.com/notkainoa/restless/releases/latest), unzip
+it, and move `Restless.app` to `/Applications`. Requires macOS 26 (Tahoe) or
+newer.
 
-The build is not notarized. The first time you open it, right-click the app and choose Open.
+Releases are signed with a Developer ID and notarized by Apple, so the app
+opens normally. Restless updates itself with
+[Sparkle](https://sparkle-project.org): it checks for new releases in the
+background (you can turn this off in Settings), and *Check for Updates* checks
+right away.
 
-Check for Updates looks at that releases page and, when a newer build exists, opens it so you can download and replace the app.
+## The panel
 
-## The menu
+Click the icon in the menu bar to open the panel.
 
-Click the pill in the menu bar:
+- **Status card:** what Restless is doing right now, and the battery level.
+- **Groups by lid position:** hover or click the **?** next to a group for an
+  explanation of its settings.
+- **Options** (bottom corner): Settings (`⌘,`), Check for Updates, About and
+  Quit (`⌘Q`).
+- **Settings:** Launch at Login, Show in Menu Bar, the background helper's
+  status, the version and updates.
+- `Esc` closes the panel. Right-click the icon for Settings and Quit.
 
-| Toggle | What it does |
+| Setting | What it does |
 | --- | --- |
-| **Keep Awake (When Lid Is Open)** | Prevents idle sleep while the lid is open. Uses an IOKit power assertion (same mechanism as `caffeinate`). No password needed. |
-| **When Lid Is Closed** | One choice: **Off**, **Keep Awake but Lock the Screen**, or **Keep Awake and Keep Screen Unlocked**. Off lets the lid sleep the Mac. The other two keep it running with `pmset -a disablesleep 1`. **Keep Awake but Lock the Screen** locks the screen and turns the display off when you close the lid without an external display. Suppressing sleep also suppresses the usual lock-on-sleep, which is why Amped locks instead. **Keep Awake and Keep Screen Unlocked** leaves the desktop unlocked and turns the built-in backlight off, so the screen keeps drawing and can still be controlled. Anyone who opens the lid can use the Mac without a password. |
-| **Auto-off at 20% Battery** | Safety net: when on battery and the charge drops to 20% or below, Amped releases everything so the Mac can sleep normally. Remembered between launches. |
-| **Launch at Login** | Registers Amped as a login item (via `SMAppService`) so the pill is there every time you log in. |
+| **Lid Open → Keep Awake** | Prevents idle sleep and keeps the screen on while the lid is open, using IOKit power assertions (the same mechanism as `caffeinate`). No password needed. |
+| **Lid Closed → Keep Awake** | Keeps the Mac running with the lid closed, using `pmset -a disablesleep 1`. When it's off, closing the lid sleeps the Mac. |
+| **Lid Closed → Sleep Display** | Turns the display off when the lid closes. When it's off, the screen keeps drawing at zero brightness, so a computer-use agent can still see and control it. |
+| **Lid Closed → Lock Screen** | Locks the Mac when the lid closes. Keeping the Mac from sleeping also stops the usual lock-on-sleep, so Restless locks it instead. When it's off, anyone who opens the lid can use the desktop. |
+| **Battery → Auto-off at 20%** | A safety net: on battery at 20% or less, Restless releases everything so the Mac can sleep normally. Turning off lid-closed mode needs the helper; without it that part stays on, because turning it off would need your password. |
+| **Launch at Login** (Settings) | Registers Restless as a login item (with `SMAppService`), so it's there every time you log in. |
 
-The menu bar pill reflects the state at a glance:
+*Sleep Display* and *Lock Screen* can be changed while lid-closed mode is off,
+so you can set them up ahead of time. They only affect the laptop's own screen:
+while an external display is connected they do nothing, so closing the lid and
+working on the monitor behaves exactly as macOS normally does. With *Sleep Display* on and *Lock Screen* off, macOS can still
+lock the Mac if your Lock Screen settings require a password when the display
+turns off.
 
-- `pill` — sleep allowed (off)
-- `pill.fill` — awake (lid open)
-- `pills.fill` — awake with the lid closed
+The menu bar icon shows the state at a glance:
 
-A status line shows the current state and battery level. `⌘Q` quits.
+| Icon | State |
+| --- | --- |
+| `eye.slash` | Sleep is allowed |
+| `eye` | Awake while the lid is open |
+| `eye.fill` | Awake even with the lid closed |
 
-> On launch Amped starts with everything **off** (so it never surprises you by
-> blocking sleep or prompting). Only the *Auto-off* preference is remembered.
-> When it quits it always restores normal sleep behaviour.
+On launch Restless starts with keep-awake **off**, so it never surprises you by
+blocking sleep or asking for a password. When it quits it always restores
+normal sleep.
+
+## Moving from Amped
+
+Restless copies your Amped settings the first time it runs. Quit Amped and
+delete it, then remove Amped's entries under **System Settings → General →
+Login Items & Extensions**, including its background helper. Restless installs
+its own helper, and only Amped's own app could remove Amped's.
 
 ## How lid-closed mode stays passwordless
 
-Keeping a Mac awake with the lid shut requires flipping the system
-`disablesleep` flag, which only `root` can do. Amped does this through a small
-**privileged helper** — a `root` LaunchDaemon embedded in the app bundle that
-the app talks to over **XPC**. The XPC channel is locked to Amped's own
-Developer-ID **Team ID** (`setCodeSigningRequirement`), so nothing but Amped's
-signed app can reach the helper, and the helper does exactly one thing:
-`pmset disablesleep` on/off.
+Keeping a Mac awake with the lid shut means flipping the system
+`disablesleep` flag, which only `root` can do. Restless does this through a
+small **privileged helper**: a `root` LaunchDaemon embedded in the app bundle
+that the app talks to over **XPC**. The XPC channel only accepts code signed by
+the same Developer ID team, so nothing but Restless can reach the helper. The
+helper does exactly one thing, which is to turn `pmset disablesleep` on or off.
 
-The **first time** you choose *Keep Awake but Lock the Screen* or *Keep Awake and Keep Screen Unlocked*, Amped offers to set the helper
-up. Approve "Amped" once under **System Settings → General → Login Items &
-Extensions**, and from then on that choice is silent — which also lets
-*Auto-off at 20%* drop clamshell mode while the lid is shut and you're away.
-Prefer not to? *Just This Time* keeps the Mac awake now with a single password
-prompt and installs nothing. Remove the helper anytime from that same System
-Settings pane (it's visible there, unlike a hidden sudoers rule); the setup
-offer reappears the next time you enable lid-closed mode.
+The **first time** you turn on *Lid Closed → Keep Awake*, Restless offers to set
+the helper up. Approve "Restless" once under **System Settings → General →
+Login Items & Extensions**, and from then on the switch never asks for a
+password. That also lets *Auto-off at 20%* turn off lid-closed mode while the
+lid is shut and you're away.
 
-> **The helper only runs in a properly signed build.** In an unsigned local
-> build it can't be approved, so lid mode falls back to a password prompt on
-> every toggle. Build signed (below) to exercise the real path.
+If you'd rather not install the helper, choose *Just This Time*. That keeps the
+Mac awake now with a single password prompt and installs nothing. You can
+remove the helper anytime from the same System Settings pane, and the setup
+offer comes back the next time you turn on lid-closed mode.
 
-## Build & run
+> **The helper only works in a signed build.** An unsigned local build can't be
+> approved, so lid-closed mode asks for your password on every toggle.
 
-Requires Xcode, plus two Homebrew tools:
+## Build and run
 
-```sh
-brew install xcodegen librsvg
-./build.sh           # ad-hoc local build → ./dist (helper inactive; password fallback)
-open dist/Amped.app  # the pill appears in your menu bar
-```
-
-### Signed build (helper works)
-
-Signing config lives in `.env` (git-ignored; copy from `.env.example`):
+You need Xcode and XcodeGen:
 
 ```sh
-DEVELOPMENT_TEAM=82K3YC8HVF
-CODE_SIGN_IDENTITY="Developer ID Application"
+brew install xcodegen
+./build.sh              # builds into ./dist
+open dist/Restless.app
 ```
 
-Then `./build.sh` produces a build that meets Apple's notarization requirements:
-**Developer ID** signing, **Hardened Runtime** on both the app and the helper, a
-**secure timestamp**, and no `get-task-allow` entitlement. Install and try it:
+`build.sh` reads `.env`, which isn't committed (copy it from `.env.example`).
+With `CODE_SIGN_IDENTITY="Developer ID Application"` set, the build is signed
+for team `VW9NDM428H`, with Hardened Runtime and a secure timestamp, so the
+helper works and the build is ready for notarization. Leave the identity unset
+for an ad-hoc build.
+
+To work in Xcode:
 
 ```sh
-cp -R dist/Amped.app /Applications/        # run from a stable location
-open /Applications/Amped.app
+xcodegen generate && open Restless.xcodeproj
 ```
 
-Then: choose *Keep Awake but Lock the Screen* → *Set Up Helper…* → approve **Amped** in System
-Settings → choose it again — it's now silent. (No Team ID is
-hard-coded: the app reads its own at runtime to pin the XPC channel to the same
-team.)
+The `.xcodeproj` is generated from `project.yml` and isn't committed.
 
-### Notarize & ship
+## Releasing
 
-One-time: create a `notarytool` keychain profile (the password is an
-*app-specific password* from appleid.apple.com, not your Apple ID password):
+`./release.sh <version>` runs every step from `main`:
 
-```sh
-xcrun notarytool store-credentials "Amped" \
-  --apple-id "you@example.com" --team-id 82K3YC8HVF --password "xxxx-xxxx-xxxx-xxxx"
-```
+1. Builds and signs the app.
+2. Notarizes and staples it.
+3. Signs the update for Sparkle and writes the appcast.
+4. Publishes the GitHub release.
 
-Set `NOTARY_PROFILE=Amped` in `.env`, then after a signed `./build.sh`:
-
-```sh
-./notarize.sh    # ditto-zips, notarytool submit --wait, stapler staple, verifies
-```
-
-Distribute the stapled `dist/Amped.app` (zip or DMG). `altool` is dead since
-Nov 2023 — this uses `notarytool`.
-
-Pushing to `main` publishes an unsigned GitHub Release. See [`docs/RELEASING.md`](docs/RELEASING.md).
-Notarization is separate, and it is not part of that release yet.
-
-To work on it in Xcode:
-
-```sh
-./icon/generate-icons.sh && xcodegen generate && open Amped.xcodeproj
-```
-
-(The `.xcodeproj` is generated from `project.yml` and is git-ignored.)
+See [`docs/RELEASING.md`](docs/RELEASING.md) for the one-time setup.
 
 ## The icon
 
-- **Menu bar:** an SF Symbol (`pill` family) — Apple permits SF Symbols in your
-  own UI, and they adapt to light/dark and the focus state automatically.
-- **App icon:** `icon/amped.svg` (a two-tone capsule). `icon/generate-icons.sh`
-  renders it into the asset catalog at all macOS sizes. To make a proper Liquid
-  Glass icon, open `amped.svg` in **Icon Composer**, refine the layers, and
-  export an `.icon` to drop into the project.
+The app icon is an open eye with a moon for its iris: dark purple on white in
+light mode, light purple on dark purple in dark mode. It's an Icon Composer
+file, `icon/AppIcon.icon`, built from the layer SVGs in its `Assets` folder, so
+macOS switches it with the system appearance and can tint it. Open it in Icon
+Composer to edit it. `icon/restless-light.svg` and `icon/restless-dark.svg` are
+the flat versions, for anywhere else the icon is needed.
 
-## A note on the App Store
+## The App Store
 
-The lid-closed feature relies on `pmset disablesleep` / a privileged helper,
-which a sandboxed App Store build cannot do. Ship it as a notarized
-**Developer ID** app. An App Store version would have to drop the clamshell
-feature.
+Lid-closed mode relies on `pmset disablesleep` and a privileged helper, which a
+sandboxed App Store app can't use. Restless ships as a notarized Developer ID
+app instead.
 
 ## Project layout
 
 ```
 Sources/                 (the app)
-  AmpedApp.swift          @main App + MenuBarExtra
-  MenuContent.swift       the dropdown (toggles + status + quit)
-  MenuBarLabel.swift      the pill SF Symbol that reflects state
+  RestlessApp.swift       @main App (the Settings window)
+  Panel/                  the menu bar icon and its panel
   SleepController.swift   state, battery polling, auto-off safety net
+  Updater.swift           Sparkle updates
   PowerAssertion.swift    IOKit power assertion wrapper (idle sleep)
   Privileged.swift        routes pmset to the helper, else an admin prompt
-  HelperClient.swift      registers/calls the helper (SMAppService + XPC)
-  Battery.swift           battery % + on-battery via IOKit power sources
-  LoginItem.swift         launch-at-login via SMAppService
-  Prompts.swift           first-use helper-setup dialogs
+  HelperClient.swift      registers and calls the helper (SMAppService + XPC)
+  Battery.swift           battery % and on-battery via IOKit power sources
+  LoginItem.swift         launch at login via SMAppService
+  Prompts.swift           first-use helper setup dialogs
   AppDelegate.swift       restores normal sleep on quit
 Helper/                  (the privileged root daemon)
   main.swift              XPC listener entry point
   HelperService.swift     runs pmset as root; pins the client by Team ID
-  dev.gustaf.Amped.Helper.plist   LaunchDaemon definition
-Shared/                  (compiled into both targets)
+  me.kainoa.Restless.Helper.plist   LaunchDaemon definition
+RestlessControl/         Control Center controls
+Shared/                  (compiled into the app and the helper)
   HelperProtocol.swift    the XPC contract
-  HelperConstants.swift   identifiers / service names
-  CodeSigning.swift       Team-ID requirement helpers
-icon/                     amped.svg + render script
-project.yml               XcodeGen project (app + helper targets)
-build.sh                  one-shot local / signed build
-notarize.sh               notarytool submit + stapler staple
-.env.example              signing / notary config template
+  HelperConstants.swift   identifiers and service names
+  CodeSigning.swift       Team ID requirement helpers
+icon/                    AppIcon.icon (Icon Composer) and flat SVGs
+project.yml              XcodeGen project
+build.sh                 local or signed build
+notarize.sh              notarytool submit and stapler staple
+release.sh               build, notarize and publish a release with its appcast
 ```

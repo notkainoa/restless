@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Build Amped.app locally and drop it in ./dist.
-# Requires: Xcode, xcodegen (brew install xcodegen), rsvg-convert (brew install librsvg).
+# Build Restless.app locally and drop it in ./dist.
+# Requires: Xcode and xcodegen (brew install xcodegen).
 #
 # Local (ad-hoc) build — helper inactive, lid mode falls back to a password prompt:
 #     ./build.sh
@@ -13,12 +13,17 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 # Optional local config (git-ignored): DEVELOPMENT_TEAM, CODE_SIGN_IDENTITY, NOTARY_PROFILE.
+# A version passed in by release.sh wins over anything .env sets.
+PASSED_MARKETING_VERSION="${MARKETING_VERSION:-}"
+PASSED_PROJECT_VERSION="${CURRENT_PROJECT_VERSION:-}"
 if [[ -f .env ]]; then
   set -a
   # shellcheck source=/dev/null
   source ./.env
   set +a
 fi
+[[ -n "$PASSED_MARKETING_VERSION" ]] && MARKETING_VERSION="$PASSED_MARKETING_VERSION"
+[[ -n "$PASSED_PROJECT_VERSION" ]] && CURRENT_PROJECT_VERSION="$PASSED_PROJECT_VERSION"
 
 SIGN_ID="${CODE_SIGN_IDENTITY:--}"
 SIGN_ARGS=( "CODE_SIGN_IDENTITY=${SIGN_ID}" )
@@ -42,32 +47,29 @@ fi
 SIGN_ARGS+=( "MARKETING_VERSION=${MARKETING_VERSION}" )
 [[ -n "${CURRENT_PROJECT_VERSION:-}" ]] && SIGN_ARGS+=( "CURRENT_PROJECT_VERSION=${CURRENT_PROJECT_VERSION}" )
 
-echo "▸ Generating app icon…"
-./icon/generate-icons.sh
-
 echo "▸ Generating Xcode project…"
 xcodegen generate
 
 echo "▸ Building (Release)…  signing identity: ${SIGN_ID}"
 xcodebuild \
-  -project Amped.xcodeproj \
-  -scheme Amped \
+  -project Restless.xcodeproj \
+  -scheme Restless \
   -configuration Release \
   -derivedDataPath .build \
   "${SIGN_ARGS[@]}" \
   build
 
-APP=".build/Build/Products/Release/Amped.app"
+APP=".build/Build/Products/Release/Restless.app"
 mkdir -p dist
-rm -rf "dist/Amped.app"
-cp -R "$APP" "dist/Amped.app"
+rm -rf "dist/Restless.app"
+cp -R "$APP" "dist/Restless.app"
 
 echo ""
 if [[ "$SIGN_ID" == "-" ]]; then
-  echo "✅ Built dist/Amped.app  (ad-hoc — helper inactive, password fallback)"
+  echo "✅ Built dist/Restless.app  (ad-hoc — helper inactive, password fallback)"
 else
-  echo "✅ Built dist/Amped.app  (Developer ID, hardened runtime, secure timestamp)"
+  echo "✅ Built dist/Restless.app  (Developer ID, hardened runtime, secure timestamp)"
   echo "   Notarize: ./notarize.sh"
 fi
-echo "   Launch:   open dist/Amped.app"
-echo "   Install:  cp -R dist/Amped.app /Applications/"
+echo "   Launch:   open dist/Restless.app"
+echo "   Install:  cp -R dist/Restless.app /Applications/"

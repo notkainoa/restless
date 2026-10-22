@@ -3,9 +3,9 @@ import SwiftUI
 import WidgetKit
 
 @main
-struct AmpedControlBundle: WidgetBundle {
+struct RestlessControlBundle: WidgetBundle {
     var body: some Widget {
-        AmpedToggle()
+        RestlessToggle()
         LidClosedToggle()
         AutoOffToggle()
     }
@@ -17,25 +17,25 @@ struct GroupValueProvider: ControlValueProvider {
     var previewValue: Bool { true }
 
     func currentValue() async throws -> Bool {
-        UserDefaults(suiteName: AmpedDefaults.suiteName)?.bool(forKey: key) ?? false
+        UserDefaults(suiteName: RestlessDefaults.suiteName)?.bool(forKey: key) ?? false
     }
 }
 
-struct AmpedToggle: ControlWidget {
+struct RestlessToggle: ControlWidget {
     var body: some ControlWidgetConfiguration {
-        StaticControlConfiguration(kind: "dev.gustaf.Amped.toggle", provider: GroupValueProvider(key: AmpedDefaults.isActiveKey)) { isOn in
-            ControlWidgetToggle("Amped", isOn: isOn, action: SetAmpedActiveIntent()) { isOn in
+        StaticControlConfiguration(kind: "me.kainoa.Restless.toggle", provider: GroupValueProvider(key: RestlessDefaults.isActiveKey)) { isOn in
+            ControlWidgetToggle("Restless", isOn: isOn, action: SetRestlessActiveIntent()) { isOn in
                 Label(isOn ? "Awake" : "Sleep Allowed", systemImage: isOn ? "pill.fill" : "pill")
             }
         }
-        .displayName("Amped")
+        .displayName("Restless")
         .description("Keep your Mac awake with the settings you last used.")
     }
 }
 
 struct LidClosedToggle: ControlWidget {
     var body: some ControlWidgetConfiguration {
-        StaticControlConfiguration(kind: "dev.gustaf.Amped.lidClosed", provider: GroupValueProvider(key: AmpedDefaults.lidClosedKey)) { isOn in
+        StaticControlConfiguration(kind: "me.kainoa.Restless.lidClosed", provider: GroupValueProvider(key: RestlessDefaults.lidClosedKey)) { isOn in
             ControlWidgetToggle("When Lid Is Closed", isOn: isOn, action: SetLidClosedIntent()) { isOn in
                 Label(isOn ? "On" : "Off", systemImage: "laptopcomputer")
             }
@@ -47,7 +47,7 @@ struct LidClosedToggle: ControlWidget {
 
 struct AutoOffToggle: ControlWidget {
     var body: some ControlWidgetConfiguration {
-        StaticControlConfiguration(kind: "dev.gustaf.Amped.autoOff", provider: GroupValueProvider(key: AmpedDefaults.autoOffKey)) { isOn in
+        StaticControlConfiguration(kind: "me.kainoa.Restless.autoOff", provider: GroupValueProvider(key: RestlessDefaults.autoOffKey)) { isOn in
             ControlWidgetToggle("Auto-off at 20%", isOn: isOn, action: SetAutoOffIntent()) { isOn in
                 Label(isOn ? "On" : "Off", systemImage: "battery.25percent")
             }

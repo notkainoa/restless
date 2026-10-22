@@ -1,0 +1,59 @@
+{
+  "groups": [
+    {
+      "layers": [
+        {
+          "image-name-specializations": [
+            {
+              "value": "moon-light.svg"
+            },
+            {
+              "appearance": "dark",
+              "value": "moon-dark.svg"
+            }
+          ],
+          "name": "Moon",
+          "glass": false
+        },
+        {
+          "image-name-specializations": [
+            {
+              "value": "eye-light.svg"
+            },
+            {
+              "appearance": "dark",
+              "value": "eye-dark.svg"
+            }
+          ],
+          "name": "Eye",
+          "glass": false
+        },
+        {
+          "image-name-specializations": [
+            {
+              "value": "background-light.svg"
+            },
+            {
+              "appearance": "dark",
+              "value": "background-dark.svg"
+            }
+          ],
+          "name": "Background",
+          "glass": false
+        }
+      ],
+      "shadow": {
+        "kind": "none",
+        "opacity": 0
+      },
+      "specular": false,
+      "translucency": {
+        "enabled": false,
+        "value": 0
+      }
+    }
+  ],
+  "supported-platforms": {
+    "squares": "shared"
+  }
+}

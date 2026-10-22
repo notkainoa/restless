@@ -20,6 +20,7 @@ final class HelperListenerDelegate: NSObject, NSXPCListenerDelegate {
     private var pendingExit: DispatchWorkItem?
 
     func listener(_ listener: NSXPCListener, shouldAcceptNewConnection connection: NSXPCConnection) -> Bool {
+        guard CodeSigning.currentCodeIsIntact() else { exit(0) }
         if let requirement = CodeSigning.sameTeamRequirement(identifier: HelperConstants.appIdentifier) {
             connection.setCodeSigningRequirement(requirement)
         }

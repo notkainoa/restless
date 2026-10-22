@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Combine
 import CoreGraphics
@@ -16,7 +17,8 @@ final class SleepController: ObservableObject {
         didSet { mirrorControlState() }
     }
 
-    @Published private(set) var lidCloseAction: LidCloseAction
+    @Published private(set) var lidSleepDisplay: Bool
+    @Published private(set) var lidLockScreen: Bool
 
     @Published private(set) var autoOff: Bool {
         didSet { mirrorControlState() }
@@ -35,12 +37,15 @@ final class SleepController: ObservableObject {
     private let lidMonitor = LidMonitor()
     private var batteryTimer: Timer?
     private var lidIsShut = false
+    private var displayObserver: NSObjectProtocol?
 
     private static let autoOffKey = "autoOffEnabled"
     private static let helperPromptedKey = "helperPrompted"
     private static let lastKeepAwakeKey = "lastActiveKeepAwake"
     private static let lastLidClosedKey = "lastActiveLidClosed"
-    private static let lidCloseActionKey = "lidCloseAction"
+    private static let legacyLidCloseActionKey = "lidCloseAction"
+    private static let lidSleepDisplayKey = "lidSleepDisplay"
+    private static let lidLockScreenKey = "lidLockScreen"
     private let autoOffThreshold = 20
 
     private var helperPrompted: Bool {
@@ -49,12 +54,16 @@ final class SleepController: ObservableObject {
     }
 
     private init() {
+        Self.importAmpedSettings()
+        Self.migrateLegacyLidCloseAction()
         UserDefaults.standard.register(defaults: [
             Self.lastKeepAwakeKey: true,
-            Self.lidCloseActionKey: LidCloseAction.lock.rawValue,
+            Self.lidSleepDisplayKey: true,
+            Self.lidLockScreenKey: true,
         ])
         autoOff = UserDefaults.standard.bool(forKey: Self.autoOffKey)
-        lidCloseAction = LidCloseAction(rawValue: UserDefaults.standard.string(forKey: Self.lidCloseActionKey) ?? "") ?? .lock
+        lidSleepDisplay = UserDefaults.standard.bool(forKey: Self.lidSleepDisplayKey)
+        lidLockScreen = UserDefaults.standard.bool(forKey: Self.lidLockScreenKey)
         lidIsShut = LidMonitor.isClosed()
         refreshBattery()
         batteryTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
@@ -64,6 +73,17 @@ final class SleepController: ObservableObject {
             MainActor.assumeIsolated {
                 guard let self, self.lidIsShut != closed else { return }
                 self.lidIsShut = closed
+                self.syncAssertion()
+                self.applyLidPresentation()
+            }
+        }
+        // Plugging a monitor in or out with the lid shut changes whether the lid settings apply.
+        displayObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, self.lidClosed, self.lidIsShut else { return }
+                self.syncAssertion()
                 self.applyLidPresentation()
             }
         }
@@ -94,45 +114,68 @@ final class SleepController: ObservableObject {
         UserDefaults.standard.set(lidClosed, forKey: Self.lastLidClosedKey)
     }
 
+#if DEBUG
+    /// Shows a state in snapshots without holding any assertion or touching pmset.
+    func debugShowState(keepAwake: Bool, lidClosed: Bool) {
+        self.keepAwake = keepAwake
+        self.lidClosed = lidClosed
+    }
+#endif
+
     private func mirrorControlState() {
-        let group = UserDefaults(suiteName: AmpedDefaults.suiteName)
-        group?.set(keepAwake || lidClosed, forKey: AmpedDefaults.isActiveKey)
-        group?.set(lidClosed, forKey: AmpedDefaults.lidClosedKey)
-        group?.set(autoOff, forKey: AmpedDefaults.autoOffKey)
+#if DEBUG
+        // The app-group container prompts in unsigned builds, which would block a layout snapshot.
+        if UserDefaults.standard.string(forKey: "panelSnapshot") != nil || SettingsSnapshot.output != nil { return }
+#endif
+        let group = UserDefaults(suiteName: RestlessDefaults.suiteName)
+        group?.set(keepAwake || lidClosed, forKey: RestlessDefaults.isActiveKey)
+        group?.set(lidClosed, forKey: RestlessDefaults.lidClosedKey)
+        group?.set(autoOff, forKey: RestlessDefaults.autoOffKey)
         ControlCenter.shared.reloadAllControls()
     }
 
-    var lidMenuChoice: LidMenuChoice {
-        guard lidClosed else { return .off }
-        switch lidCloseAction {
-        case .lock: return .lock
-        case .keepUnlocked: return .keepUnlocked
+    // 1.0.1 stored one lid choice; it maps onto the two switches.
+    /// Restless started as a fork of Amped; carry over its settings the first time Restless runs.
+    private static func importAmpedSettings() {
+        let defaults = UserDefaults.standard
+        let importedKey = "importedAmpedSettings"
+        guard !defaults.bool(forKey: importedKey) else { return }
+        defaults.set(true, forKey: importedKey)
+        guard let amped = UserDefaults(suiteName: "dev.gustaf.Amped") else { return }
+        let keys = [autoOffKey, lidSleepDisplayKey, lidLockScreenKey, legacyLidCloseActionKey,
+                    lastKeepAwakeKey, lastLidClosedKey, SettingsView.showMenuBarItemKey]
+        for key in keys where defaults.object(forKey: key) == nil {
+            if let value = amped.object(forKey: key) { defaults.set(value, forKey: key) }
+        }
+        if let checks = amped.object(forKey: "ChecksForUpdatesAutomatically") as? Bool,
+           defaults.object(forKey: "SUEnableAutomaticChecks") == nil {
+            defaults.set(checks, forKey: "SUEnableAutomaticChecks")
         }
     }
 
-    func setLidMenuChoice(_ choice: LidMenuChoice) {
-        switch choice {
-        case .off:
-            if lidClosed { setLidClosed(false) }
-        case .lock:
-            chooseLidAction(.lock)
-        case .keepUnlocked:
-            chooseLidAction(.keepUnlocked)
-        }
+    private static func migrateLegacyLidCloseAction() {
+        let defaults = UserDefaults.standard
+        guard let legacy = defaults.string(forKey: legacyLidCloseActionKey) else { return }
+        let keepUnlocked = legacy == "keepUnlocked"
+        defaults.set(!keepUnlocked, forKey: lidSleepDisplayKey)
+        defaults.set(!keepUnlocked, forKey: lidLockScreenKey)
+        defaults.removeObject(forKey: legacyLidCloseActionKey)
     }
 
-    private func chooseLidAction(_ action: LidCloseAction) {
-        let turningOn = !lidClosed
-        if lidCloseAction != action { setLidCloseAction(action) }
-        if turningOn { setLidClosed(true) }
-    }
-
-    func setLidCloseAction(_ action: LidCloseAction) {
-        guard action != lidCloseAction else { return }
-        lidCloseAction = action
-        UserDefaults.standard.set(action.rawValue, forKey: Self.lidCloseActionKey)
+    func setLidSleepDisplay(_ on: Bool) {
+        guard on != lidSleepDisplay else { return }
+        lidSleepDisplay = on
+        UserDefaults.standard.set(on, forKey: Self.lidSleepDisplayKey)
         lidIsShut = LidMonitor.isClosed()
         syncAssertion()
+        applyLidPresentation()
+    }
+
+    func setLidLockScreen(_ on: Bool) {
+        guard on != lidLockScreen else { return }
+        lidLockScreen = on
+        UserDefaults.standard.set(on, forKey: Self.lidLockScreenKey)
+        lidIsShut = LidMonitor.isClosed()
         applyLidPresentation()
     }
 
@@ -157,13 +200,31 @@ final class SleepController: ObservableObject {
             }
         }
 
-        if Privileged.setDisableSleep(true) {
-            lidClosed = true
-            lidIsShut = LidMonitor.isClosed()
+        if Privileged.setDisableSleep(true) { startLidMode() }
+    }
+
+    /// Changes lid-closed mode only if the helper can do it without an alert or password prompt; returns false when one is needed.
+    func setLidClosedQuietly(_ on: Bool) -> Bool {
+        refreshHelper()
+        guard helperEnabled else { return false }
+        if on {
+            guard Privileged.setDisableSleep(true, allowPrompt: false) else { return false }
+            startLidMode()
+        } else {
+            guard Privileged.setDisableSleep(false, allowPrompt: false) else { return false }
+            backlight.restore()
+            lidClosed = false
             syncAssertion()
-            rememberActiveCombination()
-            applyLidPresentation()
         }
+        return true
+    }
+
+    private func startLidMode() {
+        lidClosed = true
+        lidIsShut = LidMonitor.isClosed()
+        syncAssertion()
+        rememberActiveCombination()
+        applyLidPresentation()
     }
 
     private func stopLidMode() {
@@ -174,14 +235,15 @@ final class SleepController: ObservableObject {
     }
 
     // Lid-closed needs the system assertion too: a shut lid under disablesleep still idle-sleeps without it.
-    // Unlocked mode also holds the display assertion, so idle display-off cannot lock the session.
+    // With Sleep Display off, a shut lid also holds the display assertion so idle display-off cannot lock the session.
     private func syncAssertion() {
         if keepAwake || lidClosed {
             systemAssertion.enable()
         } else {
             systemAssertion.disable()
         }
-        if keepAwake || (lidClosed && lidCloseAction == .keepUnlocked) {
+        // Sleep Display only concerns the built-in screen; with a monitor connected, macOS handles the lid as usual.
+        if keepAwake || (lidClosed && lidIsShut && !lidSleepDisplay && onlyBuiltinDisplay()) {
             displayAssertion.enable()
         } else {
             displayAssertion.disable()
@@ -194,12 +256,11 @@ final class SleepController: ObservableObject {
             return
         }
         guard onlyBuiltinDisplay() else { return }
-        switch lidCloseAction {
-        case .lock:
+        if lidLockScreen { ScreenLock.lock() }
+        if lidSleepDisplay {
             backlight.restore()
-            ScreenLock.lock()
             sleepDisplay()
-        case .keepUnlocked:
+        } else {
             backlight.dimBuiltin()
         }
     }
@@ -223,7 +284,7 @@ final class SleepController: ObservableObject {
         if on { tick() }
     }
 
-    private func setUpHelper() {
+    func setUpHelper() {
         _ = HelperClient.shared.register()
         refreshHelper()
         if !helperEnabled {
@@ -247,12 +308,18 @@ final class SleepController: ObservableObject {
         guard keepAwake || lidClosed else { return }
 
         backlight.restore()
-        systemAssertion.disable()
-        displayAssertion.disable()
-        // Without the helper, clamshell mode can't be dropped unattended.
-        if lidClosed { _ = Privileged.setDisableSleep(false, allowPrompt: false) }
         keepAwake = false
-        lidClosed = false
+        // Without the helper, lid mode can't be turned off unattended (that needs a password), so it stays
+        // on and shown as on rather than claiming the Mac can sleep while `disablesleep` is still set.
+        if lidClosed, Privileged.setDisableSleep(false, allowPrompt: false) {
+            lidClosed = false
+        }
+        syncAssertion()
+    }
+
+    func refreshStatus() {
+        refreshBattery()
+        refreshHelper()
     }
 
     private func refreshBattery() {
@@ -280,20 +347,13 @@ final class SleepController: ObservableObject {
     }
 
     var menuBarSymbolName: String {
-        if lidClosed { return "pills.fill" }
-        if keepAwake { return "pill.fill" }
-        return "pill"
+        if lidClosed { return "eye.fill" }
+        if keepAwake { return "eye" }
+        return "eye.slash"
     }
 
-    var statusText: String {
-        let battery = batteryPercent.map { " · \($0)%" } ?? ""
-        if lidClosed {
-            switch lidCloseAction {
-            case .lock: return "Awake — locks when the lid closes\(battery)"
-            case .keepUnlocked: return "Awake — screen stays unlocked\(battery)"
-            }
-        }
-        if keepAwake { return "Awake\(battery)" }
-        return "Sleep allowed\(battery)"
+    // Dimmed while the lid-closed mode will turn the screen off and nothing keeps it on with the lid open.
+    var menuBarSymbolDimmed: Bool {
+        lidClosed && !keepAwake && lidSleepDisplay
     }
 }

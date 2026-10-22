@@ -2,7 +2,7 @@ import AppIntents
 
 // A foreground mode cannot run in an extension, so the system runs these in the app, launching it if needed.
 
-struct SetAmpedActiveIntent: SetValueIntent {
+struct SetRestlessActiveIntent: SetValueIntent {
     static let title: LocalizedStringResource = "Keep Mac Awake"
     static let supportedModes: IntentModes = .foreground(.dynamic)
 
@@ -11,7 +11,7 @@ struct SetAmpedActiveIntent: SetValueIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-#if AMPED_CONTROL_EXTENSION
+#if RESTLESS_CONTROL_EXTENSION
         throw CocoaError(.featureUnsupported)
 #else
         SleepController.shared.setActive(value)
@@ -29,7 +29,7 @@ struct SetLidClosedIntent: SetValueIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-#if AMPED_CONTROL_EXTENSION
+#if RESTLESS_CONTROL_EXTENSION
         throw CocoaError(.featureUnsupported)
 #else
         SleepController.shared.setLidClosed(value)
@@ -47,7 +47,7 @@ struct SetAutoOffIntent: SetValueIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-#if AMPED_CONTROL_EXTENSION
+#if RESTLESS_CONTROL_EXTENSION
         throw CocoaError(.featureUnsupported)
 #else
         SleepController.shared.setAutoOff(value)

@@ -1,6 +1,6 @@
-name: Amped
+name: Restless
 options:
-  bundleIdPrefix: dev.gustaf
+  bundleIdPrefix: me.kainoa
   deploymentTarget:
     macOS: "26.0"
   createIntermediateGroups: true
@@ -15,23 +15,33 @@ settings:
     # set DEVELOPMENT_TEAM and a "Developer ID Application" identity (see README).
     CODE_SIGN_IDENTITY: "-"
     CODE_SIGN_STYLE: Manual
-    DEVELOPMENT_TEAM: ""
+    DEVELOPMENT_TEAM: "VW9NDM428H"
+
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: 2.9.4
 
 targets:
-  Amped:
+  Restless:
     type: application
     platform: macOS
     sources:
       - path: Sources
       - path: Shared
-      # The asset catalog (app icon) must live under `sources` — XcodeGen has no
-      # `resources` key and silently ignores it, which would drop the icon.
-      - path: Resources/Assets.xcassets
-      - path: AmpedControl/ControlIntents.swift
+      # The Icon Composer icon, with light, dark and tinted appearances.
+      - path: icon/AppIcon.icon
+      # Amped's and OpenUsage's MIT notices have to ship with the app, not just sit in the repo.
+      - path: LICENSE
+        buildPhase: resources
+      - path: THIRD_PARTY_NOTICES.md
+        buildPhase: resources
+      - path: RestlessControl/ControlIntents.swift
     dependencies:
-      - target: AmpedControl
+      - package: Sparkle
+      - target: RestlessControl
         embed: true
-      - target: AmpedHelper
+      - target: RestlessHelper
         copy:
           destination: executables
           # Don't re-sign on copy — that clobbers the helper's own Developer ID
@@ -45,58 +55,63 @@ targets:
           set -e
           DEST="${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/Library/LaunchDaemons"
           mkdir -p "$DEST"
-          cp "${SRCROOT}/Helper/dev.gustaf.Amped.Helper.plist" "$DEST/"
+          cp "${SRCROOT}/Helper/me.kainoa.Restless.Helper.plist" "$DEST/"
     entitlements:
-      path: Resources/Amped.entitlements
+      path: Resources/Restless.entitlements
       properties:
         com.apple.security.application-groups:
-          - 82K3YC8HVF.dev.gustaf.Amped
+          - VW9NDM428H.me.kainoa.Restless
     settings:
       base:
-        PRODUCT_NAME: Amped
-        PRODUCT_BUNDLE_IDENTIFIER: dev.gustaf.Amped
+        PRODUCT_NAME: Restless
+        PRODUCT_BUNDLE_IDENTIFIER: me.kainoa.Restless
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ENABLE_HARDENED_RUNTIME: YES
         COMBINE_HIDPI_IMAGES: YES
     info:
       path: Resources/Info.plist
       properties:
-        CFBundleDisplayName: Amped
+        CFBundleDisplayName: Restless
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         LSMinimumSystemVersion: "26.0"
         LSUIElement: true
-        NSHumanReadableCopyright: "Amped"
+        NSHumanReadableCopyright: "Copyright © 2026 Kainoa Newton"
+        # Sparkle reads the appcast that each release attaches; only updates signed with this key install.
+        SUFeedURL: https://github.com/notkainoa/restless/releases/latest/download/appcast.xml
+        SUPublicEDKey: D56TIcKaeoVqewuYpc6Yy7dBcVkdtTrNsakrHVK4930=
+        # Check in the background from the first launch instead of asking first; Settings can turn it off.
+        SUEnableAutomaticChecks: true
 
-  AmpedControl:
+  RestlessControl:
     type: app-extension
     platform: macOS
     sources:
-      - path: AmpedControl
-      - path: Shared/AmpedDefaults.swift
+      - path: RestlessControl
+      - path: Shared/RestlessDefaults.swift
     entitlements:
-      path: AmpedControl/AmpedControl.entitlements
+      path: RestlessControl/RestlessControl.entitlements
       properties:
         com.apple.security.app-sandbox: true
         com.apple.security.application-groups:
-          - 82K3YC8HVF.dev.gustaf.Amped
+          - VW9NDM428H.me.kainoa.Restless
     settings:
       base:
-        PRODUCT_NAME: AmpedControl
-        PRODUCT_BUNDLE_IDENTIFIER: dev.gustaf.Amped.AmpedControl
+        PRODUCT_NAME: RestlessControl
+        PRODUCT_BUNDLE_IDENTIFIER: me.kainoa.Restless.RestlessControl
         ENABLE_HARDENED_RUNTIME: YES
         SKIP_INSTALL: YES
-        SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) AMPED_CONTROL_EXTENSION"
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) RESTLESS_CONTROL_EXTENSION"
     info:
-      path: AmpedControl/Info.plist
+      path: RestlessControl/Info.plist
       properties:
-        CFBundleDisplayName: Amped
+        CFBundleDisplayName: Restless
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
 
-  AmpedHelper:
+  RestlessHelper:
     type: tool
     platform: macOS
     sources:
@@ -106,8 +121,8 @@ targets:
       - path: Shared
     settings:
       base:
-        PRODUCT_NAME: AmpedHelper
-        PRODUCT_BUNDLE_IDENTIFIER: dev.gustaf.Amped.Helper
+        PRODUCT_NAME: RestlessHelper
+        PRODUCT_BUNDLE_IDENTIFIER: me.kainoa.Restless.Helper
         GENERATE_INFOPLIST_FILE: YES
         CREATE_INFOPLIST_SECTION_IN_BINARY: YES
         SKIP_INSTALL: YES

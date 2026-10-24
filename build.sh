@@ -60,6 +60,28 @@ xcodebuild \
   build
 
 APP=".build/Build/Products/Release/Restless.app"
+
+# Sparkle ships its nested helpers (the XPC services, Autoupdate and
+# Updater.app) ad-hoc signed, and Xcode leaves them that way, so notarization
+# rejects them. Re-sign them with our identity, innermost first, then re-seal
+# the framework and the app. Not --deep: that would also re-sign the helper and
+# the Control Center extension and could drop their entitlements.
+if [[ "$SIGN_ID" != "-" ]]; then
+  echo "▸ Re-signing Sparkle's nested helpers…"
+  resign() {
+    codesign --force --sign "$SIGN_ID" --options runtime --timestamp \
+      --preserve-metadata=entitlements "$1"
+  }
+  SPARKLE="$APP/Contents/Frameworks/Sparkle.framework/Versions/B"
+  resign "$SPARKLE/XPCServices/Installer.xpc"
+  resign "$SPARKLE/XPCServices/Downloader.xpc"
+  resign "$SPARKLE/Autoupdate"
+  resign "$SPARKLE/Updater.app"
+  resign "$APP/Contents/Frameworks/Sparkle.framework"
+  resign "$APP"
+  codesign --verify --deep --strict "$APP"
+fi
+
 mkdir -p dist
 rm -rf "dist/Restless.app"
 cp -R "$APP" "dist/Restless.app"

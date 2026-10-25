@@ -41,7 +41,10 @@ From an up-to-date, clean `main`:
 ./release.sh 1.1.0
 ```
 
-It runs these steps:
+It first checks `.env`, the certificate, the notary profile, `gh` and the
+Sparkle key, so a missing credential fails in seconds. The first time, macOS
+may ask to let `generate_keys` use the Sparkle key: choose **Always Allow**.
+Then it runs these steps:
 
 1. Builds and signs `Restless.app` with version `1.1.0`. The build number is
    the commit count on `main`, which only grows, and that's what Sparkle
@@ -54,3 +57,6 @@ It runs these steps:
 The app's feed is
 `https://github.com/notkainoa/restless/releases/latest/download/appcast.xml`,
 so every installed copy sees the new release as soon as it's published.
+
+If a step fails, the script says which one. Anything it built is kept in
+`dist/release-<version>/`, and nothing is published until the last step.

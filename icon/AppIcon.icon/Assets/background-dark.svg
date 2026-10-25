@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
   <!-- Restless dark: background layer (system applies the icon shape) -->
   <defs>
-    <linearGradient id="tile" gradientUnits="userSpaceOnUse" x1="0" y1="96" x2="0" y2="928"><stop offset="0" stop-color="#251d6c"/><stop offset="0.509" stop-color="#1e1755"/><stop offset="1" stop-color="#181246"/></linearGradient>
+    <linearGradient id="tile" gradientUnits="userSpaceOnUse" x1="0" y1="96" x2="0" y2="928"><stop offset="0" stop-color="#1e201f"/><stop offset="0.509" stop-color="#171918"/><stop offset="1" stop-color="#101211"/></linearGradient>
   </defs>
   <rect width="1024" height="1024" fill="url(#tile)"/>
 </svg>

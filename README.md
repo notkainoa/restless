@@ -136,8 +136,8 @@ See [`docs/RELEASING.md`](docs/RELEASING.md) for the one-time setup.
 
 ## The icon
 
-The app icon is an open eye with a moon for its iris: dark purple on white in
-light mode, light purple on dark purple in dark mode. It's an Icon Composer
+The app icon is an open eye with a moon for its iris: a green eye on a white
+tile in light mode, and on a black tile in dark mode. It's an Icon Composer
 file, `icon/AppIcon.icon`, built from the layer SVGs in its `Assets` folder, so
 macOS switches it with the system appearance and can tint it. Open it in Icon
 Composer to edit it. `icon/restless-light.svg` and `icon/restless-dark.svg` are

@@ -1,10 +1,10 @@
 # Restless
 
 A small, fully native macOS menu bar app that keeps your Mac awake, **even
-with the lid closed**.
-
-Website: [restless.kainoa.me](https://restless.kainoa.me) Close the lid and SSH sessions, downloads, builds and
+with the lid closed**. Close the lid and SSH sessions, downloads, builds and
 AI agents keep running.
+
+Website: [restless.kainoa.me](https://restless.kainoa.me)
 
 Restless began as a fork of [Amped](https://github.com/gustaferiksson/amped)
 by Gustaf Eriksson and has since been rewritten around a new panel, separate

@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
   <!-- Restless light: eye layer (lids only) -->
   <defs>
-    <radialGradient id="lidUpper" gradientUnits="userSpaceOnUse" cx="512" cy="520.43" r="340.21"><stop offset="0" stop-color="#4f8a76"/><stop offset="1" stop-color="#4f8a76"/></radialGradient>
-    <radialGradient id="lidLower" gradientUnits="userSpaceOnUse" cx="512" cy="520.43" r="340.21"><stop offset="0" stop-color="#4f8a76"/><stop offset="1" stop-color="#4f8a76"/></radialGradient>
+    <radialGradient id="lidUpper" gradientUnits="userSpaceOnUse" cx="512" cy="520.43" r="340.21"><stop offset="0" stop-color="#3a2e96"/><stop offset="0.44" stop-color="#3a2e96"/><stop offset="0.69" stop-color="#2e2382"/><stop offset="0.89" stop-color="#281e7a"/><stop offset="1" stop-color="#251b76"/></radialGradient>
+    <radialGradient id="lidLower" gradientUnits="userSpaceOnUse" cx="512" cy="520.43" r="340.21"><stop offset="0" stop-color="#322688"/><stop offset="0.44" stop-color="#322688"/><stop offset="0.62" stop-color="#2f2483"/><stop offset="0.71" stop-color="#2c217c"/><stop offset="0.89" stop-color="#281e79"/><stop offset="1" stop-color="#261c77"/></radialGradient>
   </defs>
   <path fill="url(#lidLower)" d="M178.23 520.43 C282.55 669.47 381.43 757.45 511.39 757.45 C661.56 757.45 769.53 627.67 845.77 520.44 L845.77 519.44 L843.21 519.44 L843.21 520.44 C763.41 582.75 640.19 674.36 512.45 674.36 C425.37 674.36 320.7 633.91 181.17 520.76 L181.17 519.76 L178.23 519.43 Z"/>
   <path fill="url(#lidUpper)" d="M178.23 520.43 C197.2 499.55 324.84 284.19 517.59 284.19 C610.51 284.19 718.4 330.45 845.77 520.44 L843.21 520.44 C838.72 520.44 681.15 368.93 514.56 368.93 C362.03 368.93 220.52 492.39 181.17 520.76 Z"/>

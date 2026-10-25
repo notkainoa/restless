@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
   <!-- Restless app icon (light). Vector recreation of the owner's reference artwork. -->
   <defs>
-    <linearGradient id="tile" gradientUnits="userSpaceOnUse" x1="0" y1="96" x2="0" y2="928"><stop offset="0" stop-color="#ffffff"/><stop offset="0.509" stop-color="#f7f8f6"/><stop offset="1" stop-color="#eef1ed"/></linearGradient>
-    <radialGradient id="lidUpper" gradientUnits="userSpaceOnUse" cx="512" cy="520.43" r="340.21"><stop offset="0" stop-color="#4f8a76"/><stop offset="1" stop-color="#4f8a76"/></radialGradient>
-    <radialGradient id="lidLower" gradientUnits="userSpaceOnUse" cx="512" cy="520.43" r="340.21"><stop offset="0" stop-color="#4f8a76"/><stop offset="1" stop-color="#4f8a76"/></radialGradient>
+    <linearGradient id="tile" gradientUnits="userSpaceOnUse" x1="0" y1="96" x2="0" y2="928"><stop offset="0" stop-color="#faf8fe"/><stop offset="1" stop-color="#ede9fe"/></linearGradient>
+    <radialGradient id="lidUpper" gradientUnits="userSpaceOnUse" cx="512" cy="520.43" r="340.21"><stop offset="0" stop-color="#3a2e96"/><stop offset="0.44" stop-color="#3a2e96"/><stop offset="0.69" stop-color="#2e2382"/><stop offset="0.89" stop-color="#281e7a"/><stop offset="1" stop-color="#251b76"/></radialGradient>
+    <radialGradient id="lidLower" gradientUnits="userSpaceOnUse" cx="512" cy="520.43" r="340.21"><stop offset="0" stop-color="#322688"/><stop offset="0.44" stop-color="#322688"/><stop offset="0.62" stop-color="#2f2483"/><stop offset="0.71" stop-color="#2c217c"/><stop offset="0.89" stop-color="#281e79"/><stop offset="1" stop-color="#261c77"/></radialGradient>
   </defs>
   <rect x="96" y="96" width="832" height="832" rx="196" ry="196" fill="url(#tile)"/>
   <rect x="98.5" y="98.5" width="827" height="827" rx="193.5" ry="193.5" fill="none" stroke="#ffffff" stroke-opacity="0.9" stroke-width="2"/>
-  <rect x="96.75" y="96.75" width="830.5" height="830.5" rx="195.25" ry="195.25" fill="none" stroke="#d9dfda" stroke-opacity="1" stroke-width="1.5"/>
+  <rect x="96.75" y="96.75" width="830.5" height="830.5" rx="195.25" ry="195.25" fill="none" stroke="#e1dfee" stroke-opacity="1" stroke-width="1.5"/>
   <path fill="url(#lidLower)" d="M178.23 520.43 C282.55 669.47 381.43 757.45 511.39 757.45 C661.56 757.45 769.53 627.67 845.77 520.44 L845.77 519.44 L843.21 519.44 L843.21 520.44 C763.41 582.75 640.19 674.36 512.45 674.36 C425.37 674.36 320.7 633.91 181.17 520.76 L181.17 519.76 L178.23 519.43 Z"/>
   <path fill="url(#lidUpper)" d="M178.23 520.43 C197.2 499.55 324.84 284.19 517.59 284.19 C610.51 284.19 718.4 330.45 845.77 520.44 L843.21 520.44 C838.72 520.44 681.15 368.93 514.56 368.93 C362.03 368.93 220.52 492.39 181.17 520.76 Z"/>
-  <circle cx="511.31" cy="522.4" r="119.5" fill="#9fc7b8"/>
+  <circle cx="511.31" cy="522.4" r="119.5" fill="#8873f1"/>
 </svg>

@@ -51,6 +51,53 @@ final class MenuBarPanel: NSPanel {
     override var canBecomeMain: Bool { false }
 }
 
+/// Logo purples for the menu bar glyph. Sleep allowed stays a template image, so it follows
+/// the menu bar's black or white. Awake states use the app icon: light lids `#3A2E96` and moon
+/// `#8873F1`, dark lids `#8370FA` and moon `#A998FD`.
+private enum MenuBarIcon {
+    private static let moonLight = color(0x8873F1)
+    private static let lidLight = color(0x3A2E96)
+    private static let moonDark = color(0xA998FD)
+    private static let lidDark = color(0x8370FA)
+    // Quieter than the awake purples: the moon eased toward white, the lids eased toward black.
+    private static let restingLight = color(0xAEA0F5)
+    private static let restingDark = color(0x5E51B4)
+
+    /// Nil means the glyph stays a template. The filled eye is the stronger purple on that menu bar
+    /// (deeper on light, brighter on dark). The open eye takes the other logo purple.
+    static func tint(symbol: String, dimmed: Bool, dark: Bool) -> NSColor? {
+        guard symbol != "eye.slash" else { return nil }
+        if dimmed { return dark ? restingDark : restingLight }
+        if dark { return symbol == "eye.fill" ? moonDark : lidDark }
+        return symbol == "eye.fill" ? lidLight : moonLight
+    }
+
+    static func symbol(_ name: String, tint: NSColor) -> NSImage? {
+        guard let source = NSImage(systemSymbolName: name, accessibilityDescription: "Restless")?.copy() as? NSImage else {
+            return nil
+        }
+        source.isTemplate = false
+        let image = NSImage(size: source.size, flipped: false) { rect in
+            source.draw(in: rect)
+            tint.set()
+            rect.fill(using: .sourceAtop)
+            return true
+        }
+        image.isTemplate = false
+        image.accessibilityDescription = "Restless"
+        return image
+    }
+
+    private static func color(_ hex: UInt32) -> NSColor {
+        NSColor(
+            srgbRed: CGFloat((hex >> 16) & 0xFF) / 255,
+            green: CGFloat((hex >> 8) & 0xFF) / 255,
+            blue: CGFloat(hex & 0xFF) / 255,
+            alpha: 1
+        )
+    }
+}
+
 /// Owns the status item and the panel that shows Restless's controls.
 @MainActor
 final class PanelController: NSObject {
@@ -70,6 +117,7 @@ final class PanelController: NSObject {
     private var cancellables: Set<AnyCancellable> = []
     private var visibilityObservation: NSKeyValueObservation?
     private var activationObserver: NSObjectProtocol?
+    private var themeObserver: NSObjectProtocol?
 
     init(controller: SleepController) {
         self.controller = controller
@@ -214,6 +262,15 @@ final class PanelController: NSObject {
             button.action = #selector(statusButtonClicked)
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
         }
+        // A subview on the status button fights its layout. This is the notification the menu bar
+        // posts when it flips between light and dark; the icon then reads the button's appearance.
+        themeObserver = DistributedNotificationCenter.default().addObserver(
+            forName: Notification.Name("AppleInterfaceThemeChangedNotification"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.updateIcon() }
+        }
         visibilityObservation = statusItem.observe(\.isVisible) { item, _ in
             let visible = item.isVisible
             Task { @MainActor in
@@ -246,15 +303,25 @@ final class PanelController: NSObject {
 
     /// Only reassigned when it changes; every assignment costs a menu bar redraw.
     private func updateIcon() {
-        let key = "\(controller.menuBarSymbolName)-\(controller.menuBarSymbolDimmed)"
+        let dark = menuBarIsDark
+        let name = controller.menuBarSymbolName
+        let dimmed = controller.menuBarSymbolDimmed
+        let key = "\(name)-\(dimmed)-\(dark)"
         guard key != iconKey else { return }
         iconKey = key
-        var image = NSImage(systemSymbolName: controller.menuBarSymbolName, accessibilityDescription: "Restless")
-        if controller.menuBarSymbolDimmed {
-            image = image?.withSymbolConfiguration(.preferringHierarchical())
+        if let tint = MenuBarIcon.tint(symbol: name, dimmed: dimmed, dark: dark),
+           let image = MenuBarIcon.symbol(name, tint: tint) {
+            statusItem.button?.image = image
+        } else {
+            let image = NSImage(systemSymbolName: name, accessibilityDescription: "Restless")
+            image?.isTemplate = true
+            statusItem.button?.image = image
         }
-        image?.isTemplate = true
-        statusItem.button?.image = image
+    }
+
+    private var menuBarIsDark: Bool {
+        let appearance = statusItem.button?.effectiveAppearance ?? NSApp.effectiveAppearance
+        return appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
     }
 
     @objc private func statusButtonClicked() {

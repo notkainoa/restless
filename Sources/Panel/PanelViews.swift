@@ -190,9 +190,11 @@ private struct DashboardScreen: View {
                         Toggle("Keep Awake", isOn: Binding(
                             get: { controller.lidClosed },
                             set: { on in
-                                guard !controller.setLidClosedQuietly(on) else { return }
-                                // Without the helper this asks for a password or offers the helper setup.
-                                MenuBarPopover.dismissThen { controller.setLidClosed(on) }
+                                Task {
+                                    if await controller.setLidClosedQuietly(on) { return }
+                                    // An alert or a password prompt would open behind the panel.
+                                    MenuBarPopover.dismissThen { Task { await controller.setLidClosed(on) } }
+                                }
                             }
                         ))
                         .settingsSwitchStyle()
@@ -333,6 +335,16 @@ private struct SettingsScreen: View {
     @AppStorage(SettingsView.showMenuBarItemKey, store: SettingsView.store) private var showMenuBarItem = true
     @ObservedObject private var updater = Updater.shared
 
+    private var helperFootnote: String {
+        if controller.helperEnabled {
+            return "Lid Closed Keep Awake turns on and off without asking for your password."
+        }
+        if controller.helperNeedsApproval {
+            return "The helper is off in Login Items & Extensions. Turn Restless on there, and the lid toggle won't ask for your password."
+        }
+        return "Without the helper, turning Lid Closed Keep Awake on or off asks for your password."
+    }
+
     var body: some View {
         PopoverScrollView {
             VStack(alignment: .leading, spacing: PanelMetrics.sectionSpacing) {
@@ -359,15 +371,13 @@ private struct SettingsScreen: View {
                                 .foregroundStyle(.secondary)
                                 .symbolRenderingMode(.hierarchical)
                         } else {
-                            Button("Set Up…") {
+                            Button(controller.helperNeedsApproval ? "Turn On…" : "Set Up…") {
                                 MenuBarPopover.dismissThen { controller.setUpHelper() }
                             }
                             .controlSize(.small)
                         }
                     }
-                    Footnote(controller.helperEnabled
-                        ? "Lid Closed Keep Awake turns on and off without asking for your password."
-                        : "Without it, turning Lid Closed Keep Awake on or off asks for your password.")
+                    Footnote(helperFootnote)
                 }
 
                 SettingsSection("Updates") {

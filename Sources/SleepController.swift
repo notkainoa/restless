@@ -25,6 +25,7 @@ final class SleepController: ObservableObject {
     }
 
     @Published private(set) var helperEnabled: Bool = HelperClient.shared.isEnabled
+    @Published private(set) var helperNeedsApproval = HelperClient.shared.status == .requiresApproval
 
     @Published private(set) var launchAtLogin: Bool = LoginItem.isEnabled
 
@@ -38,6 +39,7 @@ final class SleepController: ObservableObject {
     private var batteryTimer: Timer?
     private var lidIsShut = false
     private var displayObserver: NSObjectProtocol?
+    private var lidChange: Task<Bool, Never>?
 
     private static let autoOffKey = "autoOffEnabled"
     private static let helperPromptedKey = "helperPrompted"
@@ -99,14 +101,20 @@ final class SleepController: ObservableObject {
     func setActive(_ on: Bool) {
         guard on else {
             keepAwake = false
-            if lidClosed { setLidClosed(false) } else { syncAssertion() }
+            if lidClosed { Task { await self.setLidClosed(false) } } else { syncAssertion() }
             return
         }
         let restoreKeepAwake = UserDefaults.standard.bool(forKey: Self.lastKeepAwakeKey)
         let restoreLidClosed = UserDefaults.standard.bool(forKey: Self.lastLidClosedKey)
         keepAwake = restoreKeepAwake
         syncAssertion()
-        if restoreLidClosed { setLidClosed(true) }
+        if restoreLidClosed { Task { await self.setLidClosed(true) } }
+    }
+
+    /// Adopts this build's helper without asking. A later lid toggle explains any new approval.
+    func prepareHelperForThisBuild() async {
+        _ = await HelperClient.shared.adoptCurrentBuild()
+        refreshHelper()
     }
 
     private func rememberActiveCombination() {
@@ -179,43 +187,68 @@ final class SleepController: ObservableObject {
         applyLidPresentation()
     }
 
-    func setLidClosed(_ on: Bool) {
-        guard on else {
-            stopLidMode()
-            return
-        }
-
-        refreshHelper()
-
-        if !helperEnabled && !helperPrompted {
-            switch Prompts.offerHelperSetup() {
-            case .cancel:
-                return
-            case .setUpHelper:
-                setUpHelper()
-                // Not marked prompted, so the offer reappears until the daemon is approved.
-                return
-            case .justThisTime:
-                helperPrompted = true
-            }
-        }
-
-        if Privileged.setDisableSleep(true) { startLidMode() }
+    func setLidClosed(_ on: Bool) async {
+        _ = await changeLidClosed(on, prompt: true)
     }
 
-    /// Changes lid-closed mode only if the helper can do it without an alert or password prompt; returns false when one is needed.
-    func setLidClosedQuietly(_ on: Bool) -> Bool {
+    /// Applies the change when the helper can do it without an alert or a password prompt.
+    func setLidClosedQuietly(_ on: Bool) async -> Bool {
+        await changeLidClosed(on, prompt: false)
+    }
+
+    /// Lid changes run one at a time, so a second click can't interleave with a helper call or a prompt.
+    @discardableResult
+    private func changeLidClosed(_ on: Bool, prompt: Bool) async -> Bool {
+        let previous = lidChange
+        let change = Task {
+            _ = await previous?.value
+            return await applyLidClosed(on, prompt: prompt)
+        }
+        lidChange = change
+        let result = await change.value
+        if lidChange == change { lidChange = nil }
+        return result
+    }
+
+    var isChangingLid: Bool { lidChange != nil }
+
+    /// Waits for a lid change still talking to the helper, so quitting can't race it.
+    func finishLidChange() async {
+        _ = await lidChange?.value
+    }
+
+    private func applyLidClosed(_ on: Bool, prompt: Bool) async -> Bool {
+        guard on != lidClosed else { return true }
+        let adoption = await HelperClient.shared.adoptCurrentBuild()
         refreshHelper()
-        guard helperEnabled else { return false }
-        if on {
-            guard Privileged.setDisableSleep(true, allowPrompt: false) else { return false }
-            startLidMode()
-        } else {
-            guard Privileged.setDisableSleep(false, allowPrompt: false) else { return false }
+        guard on else {
+            // A failure leaves lid mode on rather than claiming the Mac can sleep while `disablesleep` is set.
+            guard await Privileged.setDisableSleep(false, allowPrompt: prompt) else { return false }
             backlight.restore()
             lidClosed = false
             syncAssertion()
+            return true
         }
+
+        if adoption != .ready {
+            guard prompt else { return false }
+            // An enabled helper that won't start can't be fixed by setting it up again, so skip the offer.
+            if !helperPrompted, !helperEnabled {
+                switch Prompts.offerHelperSetup(needsApproval: adoption == .needsApproval) {
+                case .cancel:
+                    return false
+                case .setUpHelper:
+                    setUpHelper()
+                    // Not marked prompted, so the offer reappears until the daemon is approved.
+                    return false
+                case .justThisTime:
+                    helperPrompted = true
+                }
+            }
+        }
+
+        guard await Privileged.setDisableSleep(true, allowPrompt: prompt) else { return false }
+        startLidMode()
         return true
     }
 
@@ -225,13 +258,6 @@ final class SleepController: ObservableObject {
         syncAssertion()
         rememberActiveCombination()
         applyLidPresentation()
-    }
-
-    private func stopLidMode() {
-        backlight.restore()
-        _ = Privileged.setDisableSleep(false)
-        lidClosed = false
-        syncAssertion()
     }
 
     // Lid-closed needs the system assertion too: a shut lid under disablesleep still idle-sleeps without it.
@@ -286,6 +312,7 @@ final class SleepController: ObservableObject {
 
     func setUpHelper() {
         _ = HelperClient.shared.register()
+        HelperClient.shared.noteCurrentBuildRegistered()
         refreshHelper()
         if !helperEnabled {
             HelperClient.shared.openSettings()
@@ -311,10 +338,8 @@ final class SleepController: ObservableObject {
         keepAwake = false
         // Without the helper, lid mode can't be turned off unattended (that needs a password), so it stays
         // on and shown as on rather than claiming the Mac can sleep while `disablesleep` is still set.
-        if lidClosed, Privileged.setDisableSleep(false, allowPrompt: false) {
-            lidClosed = false
-        }
         syncAssertion()
+        if lidClosed { Task { await self.changeLidClosed(false, prompt: false) } }
     }
 
     func refreshStatus() {
@@ -333,7 +358,11 @@ final class SleepController: ObservableObject {
     }
 
     private func refreshHelper() {
-        helperEnabled = HelperClient.shared.isEnabled
+        let status = HelperClient.shared.status
+        helperEnabled = status == .enabled
+        helperNeedsApproval = status == .requiresApproval
+        // "Just This Time" stops applying once the helper is on, so a later re-approval is offered again.
+        if helperEnabled, helperPrompted { helperPrompted = false }
     }
 
     func cleanup() {
@@ -341,7 +370,7 @@ final class SleepController: ObservableObject {
         backlight.restore()
         systemAssertion.disable()
         displayAssertion.disable()
-        if lidClosed { _ = Privileged.setDisableSleep(false) }
+        if lidClosed { Privileged.setDisableSleepBlocking(false) }
         keepAwake = false
         lidClosed = false
     }

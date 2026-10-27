@@ -1,6 +1,10 @@
 import Foundation
 
 final class HelperService: NSObject, HelperProtocol {
+    func ping(withReply reply: @escaping () -> Void) {
+        reply()
+    }
+
     func setDisableSleep(_ enabled: Bool, withReply reply: @escaping (Bool) -> Void) {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/pmset")

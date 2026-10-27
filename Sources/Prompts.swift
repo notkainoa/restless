@@ -7,20 +7,30 @@ enum HelperSetupChoice {
 }
 
 enum Prompts {
+    /// `needsApproval`: the helper is registered but off in Login Items & Extensions, as it is after an update.
     @MainActor
-    static func offerHelperSetup() -> HelperSetupChoice {
+    static func offerHelperSetup(needsApproval: Bool = false) -> HelperSetupChoice {
         let alert = NSAlert()
         alert.alertStyle = .informational
         alert.messageText = "Keep the Mac awake with the lid closed?"
+        let why = needsApproval
+            ? """
+            Restless's background helper is turned off in Login Items & Extensions, \
+            which can happen after an update. Turn “Restless” on there once and the \
+            lid toggle won't ask for a password.
+            """
+            : """
+            This needs a small background helper that runs with elevated rights. \
+            macOS will ask you to approve “Restless” once under Login Items & \
+            Extensions — after that the lid toggle never asks for a password.
+            """
         alert.informativeText = """
-        This needs a small background helper that runs with elevated rights. \
-        macOS will ask you to approve “Restless” once under Login Items & \
-        Extensions — after that the lid toggle never asks for a password.
+        \(why)
 
         Prefer not to? “Just This Time” keeps the Mac awake now with a single \
         password prompt instead.
         """
-        alert.addButton(withTitle: "Set Up Helper…")
+        alert.addButton(withTitle: needsApproval ? "Turn On Helper…" : "Set Up Helper…")
         alert.addButton(withTitle: "Just This Time")
         alert.addButton(withTitle: "Cancel")
         NSApp.activate()

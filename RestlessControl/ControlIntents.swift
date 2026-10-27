@@ -32,7 +32,7 @@ struct SetLidClosedIntent: SetValueIntent {
 #if RESTLESS_CONTROL_EXTENSION
         throw CocoaError(.featureUnsupported)
 #else
-        SleepController.shared.setLidClosed(value)
+        await SleepController.shared.setLidClosed(value)
 #endif
         return .result()
     }

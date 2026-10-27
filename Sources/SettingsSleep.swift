@@ -19,7 +19,7 @@ struct SleepSettings: View {
             Section {
                 Toggle("Keep awake", isOn: Binding(
                     get: { controller.lidClosed },
-                    set: { controller.setLidClosed($0) }
+                    set: { on in Task { await controller.setLidClosed(on) } }
                 ))
                 Toggle("Sleep display", isOn: Binding(
                     get: { controller.lidSleepDisplay },

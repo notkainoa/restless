@@ -12,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 #endif
         panelController = PanelController(controller: SleepController.shared)
+        Task { await SleepController.shared.prepareHelperForThisBuild() }
 #if DEBUG
         if let output = UserDefaults.standard.string(forKey: "panelSnapshot").map({ URL(filePath: $0) }) {
             let screen: PanelScreen = UserDefaults.standard.string(forKey: "panelSnapshotScreen") == "settings" ? .settings : .dashboard
@@ -19,6 +20,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 #endif
         Updater.shared.start()
+    }
+
+    // A lid change in flight could set `disablesleep` after cleanup resets it, so let it finish first.
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        guard SleepController.shared.isChangingLid else { return .terminateNow }
+        Task {
+            await SleepController.shared.finishLidChange()
+            sender.reply(toApplicationShouldTerminate: true)
+        }
+        return .terminateLater
     }
 
     func applicationWillTerminate(_ notification: Notification) {
